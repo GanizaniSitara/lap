@@ -107,9 +107,6 @@ if (isMainWindow) {
   listen('settings-showStatusBar-changed', (event) => {
     config.setShowStatusBar(event.payload)
   })
-  listen('settings-autoCheckUpdates-changed', (event) => {
-    config.setAutoCheckUpdates(event.payload)
-  })
   listen('settings-debugMode-changed', (event) => {
     config.setDebugMode(event.payload)
   })
