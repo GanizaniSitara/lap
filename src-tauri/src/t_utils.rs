@@ -3527,6 +3527,7 @@ struct ThumbnailTask {
     is_heavy: bool,
     processed_already_ready: bool,
     force_regenerate: bool,
+    proxy_path: Option<String>,
 }
 
 struct FileIndexOutcome {
@@ -3735,6 +3736,7 @@ fn index_single_file(
     prefer_embedded_raw_thumbnail: bool,
     last_scan_time: i64,
     small_image_filter: i64,
+    proxy_path: Option<String>,
 ) -> Option<FileIndexOutcome> {
     let result = panic::catch_unwind(AssertUnwindSafe(|| {
         let parent_path = Path::new(path_str)
@@ -3746,7 +3748,7 @@ fn index_single_file(
         if let Ok(folder) = crate::t_sqlite::AFolder::add_to_db(album_id, &parent_path) {
             if let Some(folder_id) = folder.id {
                 if let Ok((file, _)) =
-                    crate::t_sqlite::AFile::add_to_db(folder_id, path_str, ftype, last_scan_time)
+                    crate::t_sqlite::AFile::add_to_db_with_proxy(folder_id, path_str, ftype, last_scan_time, proxy_path.clone())
                 {
                     if dimensions_excluded(ftype, file.width.unwrap_or(0), file.height.unwrap_or(0), small_image_filter) {
                         return Some(FileIndexOutcome { excluded: true, task: None,
@@ -3794,6 +3796,7 @@ fn index_single_file(
                                 ),
                                 processed_already_ready: thumbnail_ready,
                                 force_regenerate: needs_thumbnail_regeneration,
+                                proxy_path: proxy_path.clone(),
                             })
                         };
 
@@ -3845,10 +3848,15 @@ async fn process_thumbnail_task(
 
     let task_for_thumb = task.clone();
     let thumb_ok = tauri::async_runtime::spawn_blocking(move || {
+        let (actual_path, actual_type) = if let Some(ref p) = task_for_thumb.proxy_path {
+            (p.clone(), 1)
+        } else {
+            (task_for_thumb.file_path.clone(), task_for_thumb.file_type)
+        };
         match crate::t_sqlite::AThumb::get_or_create_thumb(
             task_for_thumb.file_id,
-            &task_for_thumb.file_path,
-            task_for_thumb.file_type,
+            &actual_path,
+            actual_type,
             task_for_thumb.orientation,
             task_for_thumb.thumbnail_size,
             task_for_thumb.prefer_embedded_raw_thumbnail,
@@ -4146,6 +4154,52 @@ pub async fn index_album_worker(
                     continue;
                 }
 
+                let mut proxy_path = None;
+                if group_raw_jpeg_pairs {
+                    let ext = Path::new(&path_str).extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase();
+                    if ftype == 1 && (ext == "jpg" || ext == "jpeg") {
+                        let stem = Path::new(&path_str).file_stem().unwrap().to_string_lossy();
+                        let parent = Path::new(&path_str).parent().unwrap();
+                        let mut is_sidecar = false;
+                        for raw_ext in crate::t_common::RAW_IMGS {
+                            let raw_path = parent.join(format!("{}.{}", stem, raw_ext));
+                            if raw_path.exists() {
+                                is_sidecar = true;
+                                break;
+                            }
+                            let raw_path_up = parent.join(format!("{}.{}", stem, raw_ext.to_uppercase()));
+                            if raw_path_up.exists() {
+                                is_sidecar = true;
+                                break;
+                            }
+                        }
+                        if is_sidecar {
+                            let file_size = std::fs::metadata(&path_str).map(|m| m.len()).unwrap_or(0);
+                            with_progress_tracker(&tracker, |tracker| {
+                                tracker.modify(|snapshot| {
+                                    snapshot.total = snapshot.total.saturating_sub(1);
+                                    snapshot.search_total = snapshot.search_total.saturating_sub(1);
+                                    snapshot.scan_total = snapshot.scan_total.saturating_sub(1);
+                                    snapshot.scan_total_size = snapshot.scan_total_size.saturating_sub(file_size);
+                                });
+                                tracker.maybe_emit();
+                            });
+                            traversed_count += 1;
+                            continue;
+                        }
+                    } else if ftype == 3 {
+                        let stem = Path::new(&path_str).file_stem().unwrap().to_string_lossy();
+                        let parent = Path::new(&path_str).parent().unwrap();
+                        for jpg_ext in &["jpg", "jpeg", "JPG", "JPEG"] {
+                            let jpg_path = parent.join(format!("{}.{}", stem, jpg_ext));
+                            if jpg_path.exists() {
+                                proxy_path = Some(jpg_path.to_string_lossy().to_string());
+                                break;
+                            }
+                        }
+                    }
+                }
+
                 if let Some(outcome) = index_single_file(
                     &album.path,
                     album_id,
@@ -4155,6 +4209,7 @@ pub async fn index_album_worker(
                     prefer_embedded_raw_thumbnail,
                     current_scan_time,
                     album.small_image_filter,
+                    proxy_path,
                 ) {
                     let file_size = outcome
                         .task

@@ -1573,6 +1573,7 @@ pub struct AFile {
     #[serde(default = "default_album_visible")]
     pub album_visible: bool, // output-only: visibility under this album's filters
     pub motion_photo_offset: Option<i64>,   // byte offset of embedded MP4 (Android Motion Photo)
+    pub proxy_path: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -2681,6 +2682,7 @@ impl AFile {
             live_photo_video_path: None,
             motion_photo_offset,
             album_visible: true,
+            proxy_path: None,
         };
 
         Ok(file)
@@ -2938,9 +2940,9 @@ impl AFile {
                 is_favorite, rating, rotate, comments, has_tags,
                 e_make, e_model, e_date_time, e_software, e_artist, e_copyright, e_description, e_lens_make, e_lens_model, e_exposure_bias, e_exposure_time, e_f_number, e_focal_length, e_iso_speed, e_flash, e_orientation,
                 gps_latitude, gps_longitude, gps_altitude, geo_name, geo_admin1, geo_admin2, geo_cc,
-                last_scan_time, content_identifier, media_subtype, motion_photo_offset
+                last_scan_time, content_identifier, media_subtype, motion_photo_offset, proxy_path
             )
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36, ?37, ?38, ?39, ?40, ?41, ?42, ?43, ?44, ?45)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36, ?37, ?38, ?39, ?40, ?41, ?42, ?43, ?44, ?45, ?46)
             ON CONFLICT(folder_id, name) DO NOTHING",
             params![
                 self.folder_id,
@@ -2994,6 +2996,7 @@ impl AFile {
                 self.content_identifier,
                 self.media_subtype,
                 self.motion_photo_offset,
+                self.proxy_path,
             ]
         ).map_err(|e| e.to_string())?;
         Ok(result)
@@ -3010,8 +3013,8 @@ impl AFile {
                 rating = ?13,
                 e_make = ?14, e_model = ?15, e_date_time = ?16, e_software = ?17, e_artist = ?18, e_copyright = ?19, e_description = ?20, e_lens_make = ?21, e_lens_model = ?22, e_exposure_bias = ?23, e_exposure_time = ?24, e_f_number = ?25, e_focal_length = ?26, e_iso_speed = ?27, e_flash = ?28, e_orientation = ?29,
                 gps_latitude = ?30, gps_longitude = ?31, gps_altitude = ?32, geo_name = ?33, geo_admin1 = ?34, geo_admin2 = ?35, geo_cc = ?36,
-                last_scan_time = ?37, content_identifier = ?38, media_subtype = ?39, motion_photo_offset = ?40
-            WHERE id = ?41",
+                last_scan_time = ?37, content_identifier = ?38, media_subtype = ?39, motion_photo_offset = ?40, proxy_path = ?41
+            WHERE id = ?42",
             params![
                 file.name,
                 file.name_pinyin,
@@ -3057,6 +3060,7 @@ impl AFile {
                 file.content_identifier,
                 file.media_subtype,
                 file.motion_photo_offset,
+                file.proxy_path,
                 file_id,
             ]
         ).map_err(|e| e.to_string())?;
@@ -3219,7 +3223,8 @@ impl AFile {
                     ELSE NULL
                 END AS live_photo_video_path,
                 a.motion_photo_offset,
-                {} AS album_visible
+                {} AS album_visible,
+                a.proxy_path
             FROM afiles a
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id
@@ -3299,6 +3304,7 @@ impl AFile {
             live_photo_video_path: row.get(54)?,
             motion_photo_offset: row.get(55)?,
             album_visible: row.get(56)?,
+            proxy_path: row.get(57)?,
         })
     }
 
@@ -3700,12 +3706,36 @@ impl AFile {
         file_type: i64,
         last_scan_time: i64,
     ) -> Result<(Self, i32), String> {
-        Self::add_to_db_with_raw_info(folder_id, file_path, file_type, last_scan_time, None)
+        Self::add_to_db_with_raw_info_and_proxy(folder_id, file_path, file_type, last_scan_time, None, None)
+    }
+
+    pub fn add_to_db_with_proxy(
+        folder_id: i64,
+        file_path: &str,
+        file_type: i64,
+        last_scan_time: i64,
+        proxy_path: Option<String>,
+    ) -> Result<(Self, i32), String> {
+        Self::add_to_db_with_raw_info_and_proxy(folder_id, file_path, file_type, last_scan_time, None, proxy_path)
     }
 
     pub fn add_to_db_with_raw_info(
-        folder_id: i64, file_path: &str, file_type: i64, last_scan_time: i64,
+        folder_id: i64,
+        file_path: &str,
+        file_type: i64,
+        last_scan_time: i64,
         raw_info: Option<t_libraw::RawInfo>,
+    ) -> Result<(Self, i32), String> {
+        Self::add_to_db_with_raw_info_and_proxy(folder_id, file_path, file_type, last_scan_time, raw_info, None)
+    }
+
+    pub fn add_to_db_with_raw_info_and_proxy(
+        folder_id: i64,
+        file_path: &str,
+        file_type: i64,
+        last_scan_time: i64,
+        raw_info: Option<t_libraw::RawInfo>,
+        proxy_path: Option<String>,
     ) -> Result<(Self, i32), String> {
         // Check if the file exists
         let existing_file = Self::fetch(folder_id, file_path)?;
@@ -3776,12 +3806,19 @@ impl AFile {
                         }
                     }
                 }
+                if file.proxy_path != proxy_path {
+                    if let Some(file_id) = file.id {
+                        let _ = Self::update_column(file_id, "proxy_path", &proxy_path);
+                        file.proxy_path = proxy_path.clone();
+                    }
+                }
             }
             return Ok((file, 0));
         }
 
         // insert the new file into the database
-        let mut new_file_struct = Self::new_with_raw_info(folder_id, file_path, file_type, raw_info)?;
+        let mut new_file_struct = Self::new_with_raw_info(folder_id, file_path, file_type, raw_info.clone())?;
+        new_file_struct.proxy_path = proxy_path.clone();
         new_file_struct.last_scan_time = Some(last_scan_time);
         let inserted = new_file_struct.insert()?;
 
@@ -3790,7 +3827,7 @@ impl AFile {
         // winning row is marked as seen by this scan and receives any required
         // metadata or thumbnail refresh.
         if inserted == 0 {
-            return Self::add_to_db(folder_id, file_path, file_type, last_scan_time);
+            return Self::add_to_db_with_raw_info_and_proxy(folder_id, file_path, file_type, last_scan_time, raw_info, proxy_path);
         }
 
         let new_file = Self::fetch(folder_id, file_path)?;
@@ -3894,6 +3931,7 @@ impl AFile {
             new_file_info.media_subtype = old_file_info.media_subtype.clone();
             new_file_info.live_photo_video_id = old_file_info.live_photo_video_id;
         }
+        new_file_info.proxy_path = old_file_info.proxy_path.clone();
         new_file_info.last_scan_time = Some(last_scan_time);
 
         // update the file info
@@ -6497,13 +6535,17 @@ impl AFile {
         let file_opt = Self::get_file_info(file_id).map_err(|e| e.to_string())?;
         let file = file_opt.ok_or("File not found")?;
 
+        let (file_path, actual_type) = if let Some(proxy_path) = file.proxy_path {
+            (proxy_path, Some(1))
+        } else {
+            (file.file_path.ok_or("File path not resolved")?, file.file_type)
+        };
+
         // 2. Check if it's an image
-        // file_type: 1 is image, 3 is HEIC
-        if file.file_type != Some(1) && file.file_type != Some(3) {
+        // actual_type: 1 is image, 3 is RAW
+        if actual_type != Some(1) && actual_type != Some(3) {
             return Err("File is not an image".to_string());
         }
-
-        let file_path = file.file_path.ok_or("File path not resolved")?;
 
         // 3. Check if embedding exists
         if let Ok(embeds) = Self::get_embedding_by_id(file_id) {
@@ -9807,6 +9849,7 @@ fn create_db_internal() -> Result<(), String> {
             media_subtype TEXT,
             live_photo_video_id INTEGER,
             motion_photo_offset INTEGER,
+            proxy_path TEXT,
             FOREIGN KEY (folder_id) REFERENCES afolders(id) ON DELETE CASCADE
         )",
         [],
@@ -9871,6 +9914,10 @@ fn create_db_internal() -> Result<(), String> {
     );
     let _ = conn.execute(
         "ALTER TABLE afiles ADD COLUMN culling_flag INTEGER NOT NULL DEFAULT 0",
+        [],
+    );
+    let _ = conn.execute(
+        "ALTER TABLE afiles ADD COLUMN proxy_path TEXT",
         [],
     );
 
