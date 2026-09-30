@@ -1,6 +1,5 @@
 use crate::t_sqlite;
-use image::{DynamicImage, GenericImageView};
-use ort::{GraphOptimizationLevel, Session};
+use image::DynamicImage;
 use rusqlite::params;
 use std::thread;
 use std::time::Duration;
@@ -19,7 +18,7 @@ pub fn start_worker() {
 }
 
 fn process_pending_files() -> Result<(), String> {
-    let mut conn = t_sqlite::open_conn()?;
+    let conn = t_sqlite::open_conn()?;
     
     // Find afiles needing processing, strictly bypassing any file whose parent folder is marked ai_excluded = 1
     let query = "
@@ -67,22 +66,22 @@ fn process_pending_files() -> Result<(), String> {
 
 fn extract_ocr_text(_img: &DynamicImage) -> String {
     // Scaffolding for ONNX OCR model
-    let _session = Session::builder()
-        .unwrap()
-        .with_optimization_level(GraphOptimizationLevel::Level3)
-        .unwrap();
-        // .commit_from_file("ocr.onnx")
-        // .unwrap();
+    // let _session = ort::session::Session::builder()
+    //     .unwrap()
+    //     .with_optimization_level(ort::session::builder::GraphOptimizationLevel::Level3)
+    //     .unwrap();
+    //     // .commit_from_file("ocr.onnx")
+    //     // .unwrap();
     "placeholder_ocr_text".to_string()
 }
 
 fn detect_objects(_img: &DynamicImage) -> String {
     // Scaffolding for ONNX YOLO model
-    let _session = Session::builder()
-        .unwrap()
-        .with_optimization_level(GraphOptimizationLevel::Level3)
-        .unwrap();
-        // .commit_from_file("yolo.onnx")
-        // .unwrap();
+    // let _session = ort::session::Session::builder()
+    //     .unwrap()
+    //     .with_optimization_level(ort::session::builder::GraphOptimizationLevel::Level3)
+    //     .unwrap();
+    //     // .commit_from_file("yolo.onnx")
+    //     // .unwrap();
     "placeholder_ai_tags".to_string()
 }
