@@ -184,6 +184,7 @@ import {
   shouldUseBackendPreview,
   getFileExtension,
   getThumbUrl,
+  getLapUrl,
   getThumbnailDataUrl,
   getThumbnailDataUrlInflight,
   isWin,
@@ -438,7 +439,7 @@ async function getEffectiveThumbnailSrc() {
   if (props.thumbnailSrc) return props.thumbnailSrc;
   const fileId = props.fileId;
   if (!fileId) return '';
-  const thumbUrl = getThumbUrl(fileId, false, config.settings.thumbnailSize, props.fileVersion);
+  const thumbUrl = getLapUrl(fileId, false, config.settings.thumbnailSize, props.fileVersion);
   if (!isWin) return thumbUrl;
   if (thumbUrl.startsWith('data:')) {
     resolvedThumbnailSrc.value = thumbUrl;

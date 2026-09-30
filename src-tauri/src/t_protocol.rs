@@ -180,41 +180,48 @@ pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
                     return;
                 }
 
-                let response = match t_sqlite::AThumb::fetch_raw_for_library(file_id, &library_id) {
-                    Ok(Some(data)) => {
-                        let _ = crate::t_thumb_cache::put(file_id, &data);
-                        let final_data = if has_auto_enhance {
-                            crate::t_enhance::apply_auto_enhance_to_bytes(&data).unwrap_or(data)
-                        } else {
-                            data
-                        };
-                        image_response(final_data)
-                    }
-                    _ => {
-                        if let Ok(Some(file)) = t_sqlite::AFile::get_file_info(file_id) {
-                            if let Some(file_path) = file.file_path.clone() {
-                                let file_type = file.file_type.unwrap_or(0);
-                                let orientation = file.e_orientation.unwrap_or(1) as i32;
-                                let album_id = file.album_id.unwrap_or(0);
-                                let thumbnail_size = 200;
-                                t_sqlite::AThumb::schedule_background_generation_for_library(
-                                    app_handle,
-                                    file_id,
-                                    file_path,
-                                    file_type,
-                                    orientation,
-                                    thumbnail_size,
-                                    false,
-                                    album_id,
-                                    false,
-                                    None,
-                                );
-                            }
+                if let Ok(Some(data)) = t_sqlite::AThumb::fetch_raw_for_library(file_id, &library_id) {
+                    let _ = crate::t_thumb_cache::put(file_id, &data);
+                    let final_data = if has_auto_enhance {
+                        crate::t_enhance::apply_auto_enhance_to_bytes(&data).unwrap_or(data)
+                    } else {
+                        data
+                    };
+                    responder.respond(image_response(final_data));
+                    return;
+                }
+
+                if let Ok(Some(file)) = t_sqlite::AFile::get_file_info(file_id) {
+                    if let Some(file_path) = file.file_path {
+                        let file_type = file.file_type.unwrap_or(0);
+                        let orientation = file.e_orientation.unwrap_or(1) as i32;
+                        let album_id = file.album_id.unwrap_or(0);
+                        let thumbnail_size = 200;
+                        t_sqlite::AThumb::schedule_background_generation_for_library(
+                            app_handle,
+                            file_id,
+                            file_path.clone(),
+                            file_type,
+                            orientation,
+                            thumbnail_size,
+                            false,
+                            album_id,
+                            false,
+                            None,
+                        );
+
+                        if let Ok(data) = t_image::get_file_image_bytes_cached(&file_path, false).await {
+                            let final_data = if has_auto_enhance {
+                                crate::t_enhance::apply_auto_enhance_to_bytes(&data).unwrap_or(data)
+                            } else {
+                                data
+                            };
+                            responder.respond(image_response(final_data));
+                            return;
                         }
-                        text_response(http::StatusCode::NOT_FOUND, "thumbnail not found")
                     }
-                };
-                responder.respond(response);
+                }
+                responder.respond(text_response(http::StatusCode::NOT_FOUND, "thumbnail not found"));
             });
         })
         .register_asynchronous_uri_scheme_protocol("preview", |_ctx, request, responder| {

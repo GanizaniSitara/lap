@@ -22,6 +22,14 @@
       @pointerenter="startMediaPreview"
       @pointerleave="stopMediaPreview"
     >
+      <!-- placeholder icon while thumbnail is loading/generating -->
+      <div
+        v-if="!isThumbnailLoaded"
+        class="absolute inset-0 flex items-center justify-center text-base-content/20 pointer-events-none"
+      >
+        <component :is="placeholderIcon" class="w-8 h-8 opacity-30 animate-pulse" />
+      </div>
+
       <!-- image -->
       <img
         v-if="thumbnailSrc"
@@ -232,7 +240,7 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import { THUMBNAIL_BADGE } from '@/common/constants';
-import { isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp, formatCaptureSettings, formatCaptureSettingValue, formatCameraInfo, getAssetSrc, getThumbUrl, getFileExtension } from '@/common/utils';
+import { isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp, formatCaptureSettings, formatCaptureSettingValue, formatCameraInfo, getAssetSrc, getThumbUrl, getLapUrl, getFileExtension } from '@/common/utils';
 import { isWebViewVideoPlaybackDisabled, getGStreamerAvailability } from '@/common/video';
 import { claimHoverPreview, releaseHoverPreview } from '@/common/hoverPreview';
 import ContextMenu from '@/components/ContextMenu.vue';
@@ -248,7 +256,9 @@ import {
   IconStarFilled,
   IconFlagFilled,
   IconFlagOff,
-  IconLivePhoto
+  IconLivePhoto,
+  IconPhoto,
+  IconVideo
 } from '@/common/icons';
 
 const props = defineProps({
@@ -330,18 +340,27 @@ const shouldScaleThumbnail = computed(() => config.settings.grid.style === 1 || 
 const thumbnailCornerClass = computed(() => (
   config.settings.grid.thumbnailCorners === 1 ? 'rounded-none' : 'rounded-box'
 ));
-const thumbnailSrc = ref(props.file.thumbnail || '');
+const placeholderIcon = computed(() => (isVideoFile.value ? IconVideo : IconPhoto));
+
+const thumbnailSrc = ref(
+  props.file?.thumbnail ||
+  (props.file?.id ? getLapUrl(Number(props.file.id), false, config.settings.thumbnailSize, Number(props.file.modified_at || 0)) : '')
+);
 const isThumbnailLoaded = ref(false);
 let thumbnailRetryCount = 0;
 
 watch(
   () => [props.file?.id, props.file?.thumbnail, props.file?.edits],
-  ([, src], oldVals) => {
+  ([id, src], oldVals) => {
     const editsChanged = oldVals && oldVals[2] !== undefined && oldVals[2] !== props.file?.edits;
     if (editsChanged && props.file?.id) {
       thumbnailSrc.value = getThumbUrl(props.file.id, true, config.settings.thumbnailSize, Number(props.file.modified_at || 0));
+    } else if (src) {
+      thumbnailSrc.value = String(src);
+    } else if (id && Number(id) > 0) {
+      thumbnailSrc.value = getLapUrl(Number(id), false, config.settings.thumbnailSize, Number(props.file?.modified_at || 0));
     } else {
-      thumbnailSrc.value = String(src || '');
+      thumbnailSrc.value = '';
     }
     isThumbnailLoaded.value = false;
     thumbnailRetryCount = 0;
@@ -356,8 +375,11 @@ function handleThumbnailLoad() {
 function retryThumbnail() {
   const isThumbnailProtocol = thumbnailSrc.value.startsWith('thumb://localhost')
     || thumbnailSrc.value.startsWith('http://thumb.localhost')
-    || thumbnailSrc.value.startsWith('https://thumb.localhost');
-  if (thumbnailRetryCount > 0 || !isThumbnailProtocol) {
+    || thumbnailSrc.value.startsWith('https://thumb.localhost')
+    || thumbnailSrc.value.startsWith('lap://localhost')
+    || thumbnailSrc.value.startsWith('http://lap.localhost')
+    || thumbnailSrc.value.startsWith('https://lap.localhost');
+  if (thumbnailRetryCount > 1 || !isThumbnailProtocol) {
     return;
   }
   thumbnailRetryCount++;

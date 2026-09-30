@@ -539,7 +539,6 @@ impl Album {
                 "SELECT a.id
                      FROM afiles a
                      JOIN afolders b ON a.folder_id = b.id
-                     JOIN athumbs c ON a.id = c.file_id
                      WHERE a.id = ?1
                        AND b.album_id = ?2
                        AND (a.file_type IN (1, 2, 3))
@@ -561,7 +560,6 @@ impl Album {
             "SELECT a.id
                 FROM afiles a
                 JOIN afolders b ON a.folder_id = b.id
-                JOIN athumbs c ON a.id = c.file_id
                 WHERE b.album_id = ?1
                   AND (a.file_type IN (1, 2, 3))
                   AND {}
@@ -9760,7 +9758,7 @@ fn setup_conn(conn: &Connection) -> Result<(), String> {
         .map_err(|e| format!("Failed to set SQLite synchronous mode: {}", e))?;
     conn.execute("PRAGMA foreign_keys = ON", [])
         .map_err(|e| format!("Failed to enable foreign keys: {}", e))?;
-    conn.execute("PRAGMA mmap_size = 2147483648", [])
+    conn.execute_batch("PRAGMA mmap_size = 2147483648")
         .map_err(|e| format!("Failed to set SQLite mmap_size: {}", e))?;
     Ok(())
 }

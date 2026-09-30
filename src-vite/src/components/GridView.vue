@@ -91,7 +91,9 @@
           @select-toggled="(shiftKey) => $emit('item-select-toggled', getFileIndex(item, index), shiftKey)"
           @action="(actionName) => $emit('item-action', { action: actionName, index: getFileIndex(item, index) })"
         />
-        <div v-else class="w-full h-full bg-base-200/70"></div>
+        <div v-else class="w-full h-full bg-base-200/70 flex items-center justify-center text-base-content/10">
+          <IconPhoto class="w-8 h-8 opacity-20 animate-pulse" />
+        </div>
       </div>
     </VirtualScroll>
     <!-- Empty State / Loading -->

@@ -506,6 +506,26 @@ export function getThumbUrl(
   return query ? `${base}?${query}` : base;
 }
 
+export function getLapUrl(
+  fileId: number | null | undefined,
+  bustCache = false,
+  thumbnailSize = 0,
+  fileVersion = 0,
+): string {
+  if (!fileId || fileId <= 0) return '';
+  if (isWin && !bustCache) {
+    const cached = getCachedThumbnailDataUrl(fileId, thumbnailSize);
+    if (cached) return cached;
+  }
+  const scheme = isWin ? 'http://lap.localhost' : 'lap://localhost';
+  const base = `${scheme}/${_thumbLibraryId}/${fileId}`;
+  const params = new URLSearchParams();
+  if (fileVersion > 0) params.set('v', String(fileVersion));
+  if (bustCache) params.set('t', String(Date.now()));
+  const query = params.toString();
+  return query ? `${base}?${query}` : base;
+}
+
 export function getPreviewUrl(
   fileId: number | null | undefined,
   filePath?: string | null,
