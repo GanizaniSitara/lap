@@ -6925,6 +6925,7 @@ impl AThumb {
         }
     }
 
+    #[allow(dead_code)]
     fn get_file_album_id(file_id: i64) -> Result<Option<i64>, String> {
         AFile::get_file_info(file_id)
             .map(|file| file.and_then(|f| f.album_id))
@@ -6978,6 +6979,7 @@ impl AThumb {
         Ok(None)
     }
 
+    #[allow(dead_code)]
     fn write_thumb_cache_bytes(
         library_id: &str,
         album_id: i64,
@@ -7342,7 +7344,9 @@ impl AThumb {
 
     fn hydrate_output_bytes_for_library(mut thumb: Self, library_id: &str) -> Result<Self, String> {
         if thumb.thumb_data.is_none() {
-            if let Some(key) = thumb.thumb_key.as_ref() {
+            if let Some(data) = crate::t_thumb_cache::get(thumb.file_id) {
+                thumb.thumb_data = Some(data);
+            } else if let Some(key) = thumb.thumb_key.as_ref() {
                 if let Some(file) = AFile::get_file_info(thumb.file_id)? {
                     if let Some(album_id) = file.album_id {
                         let extension = file
@@ -7540,9 +7544,7 @@ impl AThumb {
             )
         });
 
-        let album_id = Self::get_file_album_id(thumbnail.file_id)?
-            .ok_or_else(|| format!("Album not found for thumbnail file: {}", thumbnail.file_id))?;
-        Self::write_thumb_cache_bytes(&library_id, album_id, &thumb_key, data)?;
+        crate::t_thumb_cache::put(thumbnail.file_id, data)?;
 
         let conn = open_conn()?;
         conn.execute(
@@ -7648,11 +7650,8 @@ impl AThumb {
         };
 
         if athumb.error_code == 0 {
-            if let (Some(data), Some(key)) = (athumb.thumb_data.as_ref(), athumb.thumb_key.as_ref())
-            {
-                let album_id = Self::get_file_album_id(file_id)?
-                    .ok_or_else(|| format!("Album not found for thumbnail file: {}", file_id))?;
-                Self::write_thumb_cache_bytes(library_id, album_id, key, data)?;
+            if let Some(data) = athumb.thumb_data.as_ref() {
+                crate::t_thumb_cache::put(file_id, data)?;
                 athumb.thumb_data = None;
             }
         }
@@ -7894,6 +7893,9 @@ impl AThumb {
         file_id: i64,
         library_id: &str,
     ) -> Result<Option<Vec<u8>>, String> {
+        if let Some(data) = crate::t_thumb_cache::get(file_id) {
+            return Ok(Some(data));
+        }
         let thumb = Self::fetch_for_library(file_id, library_id)?;
 
         // error_code 2: image is small enough to use the original file directly
@@ -9711,6 +9713,8 @@ fn setup_conn(conn: &Connection) -> Result<(), String> {
         .map_err(|e| format!("Failed to set SQLite synchronous mode: {}", e))?;
     conn.execute("PRAGMA foreign_keys = ON", [])
         .map_err(|e| format!("Failed to enable foreign keys: {}", e))?;
+    conn.execute("PRAGMA mmap_size = 2147483648", [])
+        .map_err(|e| format!("Failed to set SQLite mmap_size: {}", e))?;
     Ok(())
 }
 
@@ -9863,6 +9867,7 @@ fn create_db_internal() -> Result<(), String> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS afiles (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_id INTEGER,
             folder_id INTEGER NOT NULL,
             name TEXT NOT NULL,
             name_pinyin TEXT,
@@ -10031,6 +10036,31 @@ fn create_db_internal() -> Result<(), String> {
         [],
     )
     .map_err(|e| e.to_string())?;
+
+    let _ = conn.execute(
+        "ALTER TABLE afiles ADD COLUMN file_id INTEGER",
+        [],
+    );
+    let _ = conn.execute(
+        "UPDATE afiles SET file_id = id WHERE file_id IS NULL",
+        [],
+    );
+    let _ = conn.execute(
+        "CREATE TRIGGER IF NOT EXISTS trg_afiles_file_id AFTER INSERT ON afiles
+        BEGIN
+            UPDATE afiles SET file_id = id WHERE id = NEW.id AND file_id IS NULL;
+        END;",
+        [],
+    );
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_gallery ON afiles(file_id, created_at, rating, is_favorite)",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    let _ = conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_afiles_gallery_id ON afiles(id, created_at, rating, is_favorite)",
+        [],
+    );
 
     // file thumbnail table
     // NOTE: New columns (thumb_key, thumb_mtime, thumb_size, updated_at) are added

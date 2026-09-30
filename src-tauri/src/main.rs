@@ -38,6 +38,7 @@ mod t_protocol;
 mod t_similar;
 mod t_sqlite;
 mod t_storage;
+pub mod t_thumb_cache;
 mod t_utils;
 mod t_video;
 pub mod t_xmp;
