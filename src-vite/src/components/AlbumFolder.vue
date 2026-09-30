@@ -154,7 +154,7 @@ import { isMac, shortenFilename, isValidFileName, getFolderPath, getFullPath, no
 import {
   createFolder, renameFolder, fetchFolder, getAllAlbums, moveFolder, moveFolderOutsideLibrary,
   copyFolder, checkFileExists, revealPath, deleteFolder, deleteFolderPermanently, recountAlbum, selectFolder as selectFolderInDb,
-  setFolderFavorite, setFolderSearchExcluded, getFolderFacesExcluded, setFolderFacesExcluded, hasImportableClipboard, refreshAlbumSubfolders,
+  setFolderFavorite, setFolderSearchExcluded, getFolderFacesExcluded, setFolderFacesExcluded, getFolderAiExcluded, setFolderAiExcluded, hasImportableClipboard, refreshAlbumSubfolders,
 } from '@/common/api';
 import { DEFAULT_PLATFORM, getShortcutLabel } from '@/common/shortcuts';
 import { Album, Folder } from '@/common/types';
@@ -424,6 +424,13 @@ const getMenuItemsForFolder = async (folder: any) => {
       icon: IconPerson,
       action: () => {
         void toggleFolderFacesExcluded(folder);
+      }
+    },
+    {
+      label: folder?.ai_excluded ? "Enable Advanced AI (OCR/Objects)" : "Disable Advanced AI (OCR/Objects)",
+      icon: IconPerson, // You could use a different icon if available
+      action: () => {
+        void toggleFolderAiExcluded(folder);
       }
     },
     {
@@ -1070,6 +1077,23 @@ const toggleFolderFacesExcluded = async (folder: Folder) => {
   const result = await setFolderFacesExcluded(props.albumId, folder.path, nextValue);
   if (result !== null) {
     folder.faces_excluded = nextValue;
+  }
+};
+
+/// toggle whether folder is excluded from AI detection
+const toggleFolderAiExcluded = async (folder: Folder) => {
+  if (!folder?.path || !props.albumId) {
+    return;
+  }
+
+  if (folder.ai_excluded === undefined) {
+    folder.ai_excluded = await getFolderAiExcluded(folder.path);
+  }
+
+  const nextValue = !folder.ai_excluded;
+  const result = await setFolderAiExcluded(props.albumId, folder.path, nextValue);
+  if (result !== null) {
+    folder.ai_excluded = nextValue;
   }
 };
 

@@ -1516,6 +1516,32 @@ export async function setFolderFacesExcluded(albumId, folderPath, isExcluded) {
   return null;
 }
 
+// get folder AI detection exclusion
+export async function getFolderAiExcluded(folderPath) {
+  try {
+    const isExcluded = await invoke('get_folder_ai_excluded', { folderPath });
+    if(isExcluded) {
+      return isExcluded;
+    };
+  } catch (error) {
+    console.log('Failed to get folder AI exclusion:', error);
+  }
+  return false;
+}
+
+// set folder AI detection exclusion
+export async function setFolderAiExcluded(albumId, folderPath, isExcluded) {
+  try {
+    const result = await invoke('set_folder_ai_excluded', { albumId, folderPath, isExcluded });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to set folder AI exclusion:', error);
+  }
+  return null;
+}
+
 // set file favorite
 export async function setFileFavorite(fileId, isFavorite) {
   try {

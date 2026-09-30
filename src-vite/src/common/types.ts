@@ -13,6 +13,7 @@ export interface Folder {
     is_favorite?: boolean;
     is_excluded_from_search?: boolean;
     faces_excluded?: boolean;
+    ai_excluded?: boolean;
     has_subfolders?: boolean;
     children?: Folder[];
 }

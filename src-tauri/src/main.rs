@@ -12,6 +12,7 @@
  */
 use tauri::Manager;
 
+mod t_advanced_ai;
 mod t_ai;
 mod t_ai_png;
 mod t_apple_sidecar;
@@ -91,6 +92,7 @@ async fn main() {
         .manage(t_dedup::DedupState::default())
         .manage(t_similar::SimilarState::default())
         .setup(|_app| {
+            t_advanced_ai::start_worker();
             t_video::init_ffmpeg_path(&_app.handle());
             t_config::set_app_identifier(&_app.config().identifier);
             t_menu::install_app_menu(&_app.handle())?;
@@ -358,6 +360,8 @@ async fn main() {
             t_cmds::set_folder_search_excluded,
             t_cmds::get_folder_faces_excluded,
             t_cmds::set_folder_faces_excluded,
+            t_cmds::get_folder_ai_excluded,
+            t_cmds::set_folder_ai_excluded,
             t_cmds::set_file_favorite,
             t_cmds::set_file_rating,
             t_cmds::set_file_culling_flag,

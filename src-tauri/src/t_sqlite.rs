@@ -1392,6 +1392,32 @@ impl AFolder {
         Ok(result.unwrap_or(false))
     }
 
+    // get a folder's ai_excluded status
+    pub fn get_ai_excluded(folder_path: &str) -> Result<Option<bool>, String> {
+        let conn = open_conn()?;
+        let result = conn
+            .query_row(
+                "SELECT COALESCE(ai_excluded, 0) FROM afolders WHERE path = ?1",
+                params![folder_path],
+                |row| row.get(0),
+            )
+            .optional()
+            .map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
+    pub fn is_ai_excluded_with_conn(conn: &Connection, folder_id: i64) -> Result<bool, String> {
+        let result = conn
+            .query_row(
+                "SELECT COALESCE(ai_excluded, 0) FROM afolders WHERE id = ?1",
+                params![folder_id],
+                |row| row.get(0),
+            )
+            .optional()
+            .map_err(|e| e.to_string())?;
+        Ok(result.unwrap_or(false))
+    }
+
     // get all favorite folders
     pub fn get_favorite_folders() -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
@@ -4792,8 +4818,10 @@ impl AFile {
         }
 
         if !params.search_file_name.is_empty() {
-            conditions.push("(a.name LIKE ? COLLATE NOCASE OR a.comments LIKE ? COLLATE NOCASE)".to_string());
+            conditions.push("(a.name LIKE ? COLLATE NOCASE OR a.comments LIKE ? COLLATE NOCASE OR a.ocr_text LIKE ? COLLATE NOCASE OR a.ai_tags LIKE ? COLLATE NOCASE)".to_string());
             let pattern = format!("%{}%", params.search_file_name);
+            sql_params.push(Box::new(pattern.clone()));
+            sql_params.push(Box::new(pattern.clone()));
             sql_params.push(Box::new(pattern.clone()));
             sql_params.push(Box::new(pattern));
         }
@@ -9872,6 +9900,7 @@ fn create_db_internal() -> Result<(), String> {
             is_favorite INTEGER,
             is_excluded_from_search INTEGER DEFAULT 0,
             faces_excluded BOOLEAN DEFAULT 0,
+            ai_excluded BOOLEAN DEFAULT 0,
             has_subfolders INTEGER,
             inode INTEGER,
             FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE
@@ -9956,6 +9985,8 @@ fn create_db_internal() -> Result<(), String> {
             motion_photo_offset INTEGER,
             proxy_path TEXT,
             edits TEXT,
+            ocr_text TEXT,
+            ai_tags TEXT,
             FOREIGN KEY (folder_id) REFERENCES afolders(id) ON DELETE CASCADE
         )",
         [],
@@ -10037,6 +10068,18 @@ fn create_db_internal() -> Result<(), String> {
     );
     let _ = conn.execute(
         "ALTER TABLE folders ADD COLUMN faces_excluded BOOLEAN DEFAULT 0",
+        [],
+    );
+    let _ = conn.execute(
+        "ALTER TABLE afolders ADD COLUMN ai_excluded BOOLEAN DEFAULT 0",
+        [],
+    );
+    let _ = conn.execute(
+        "ALTER TABLE afiles ADD COLUMN ocr_text TEXT",
+        [],
+    );
+    let _ = conn.execute(
+        "ALTER TABLE afiles ADD COLUMN ai_tags TEXT",
         [],
     );
 
