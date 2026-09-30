@@ -422,12 +422,12 @@
       <!-- info panel -->
       <div
         v-if="rightPanelMounted"
-        class="relative shrink-0"
+        class="relative shrink-0 flex flex-col"
         :style="{ width: rightPanelLayoutVisible ? activeRightPanelWidth + 'px' : '0px' }"
       >
         <div
           :class="[
-            'absolute right-0 z-40 pr-1 transition-transform duration-200 ease-in-out',
+            'absolute inset-y-0 right-0 z-20 flex flex-col transition-transform duration-200 ease-in-out bg-base-200 border-l border-base-content/5',
             rightPanelVisualVisible ? 'translate-x-0' : 'translate-x-full pointer-events-none',
           ]"
           :style="{ width: activeRightPanelWidth + 'px', top: '3rem', bottom: config.settings.showStatusBar ? '2rem' : '0.25rem' }"
@@ -519,6 +519,8 @@
       :is-update-animating="statusBarIsUpdateAnimating"
       :update-icon="statusBarUpdateIcon"
       :empty-message="statusBarEmptyMessage"
+      :is-info-open="isInfoPanelOpen"
+      @toggle-info="toggleInfoPanel"
     />
   </div>
 
@@ -3682,7 +3684,9 @@ async function selectRangeFromSingleSelection(anchorIndex: number, targetIndex: 
   selectMode.value = true;
   showQuickView.value = false;
   stopSlideShow();
-  config.rightPanel.show = false;
+  if (config.rightPanel.mode === 'dedup') {
+    config.rightPanel.show = false;
+  }
 
   for (let i = start; i <= end; i++) {
     if (isRealFileItem(fileList.value[i])) {
@@ -3798,9 +3802,9 @@ async function handleGroupSelectToggled(groupRow: any, selected: boolean) {
     const ids = await getCachedGroupFileIds(groupId);
     if (!ids || ids.length === 0) return;
 
-    // Group selection enters multi-select directly, so close an active right panel
-    // just as the thumbnail selection path does.
-    config.rightPanel.show = false;
+    if (config.rightPanel.mode === 'dedup') {
+      config.rightPanel.show = false;
+    }
     selectMode.value = true;
     const idSet = new Set(ids.map(id => Number(id)).filter(id => Number.isFinite(id) && id > 0));
     const loadedById = new Map<number, number>();
@@ -4298,7 +4302,7 @@ function handleLocalKeyDown(event: KeyboardEvent) {
       exitTempViewMode();
       event.preventDefault();
       return;
-    } else if (config.rightPanel.show) {
+    } else if (config.rightPanel.show && config.rightPanel.mode === 'dedup') {
       config.rightPanel.show = false;
       event.preventDefault();
       return;
@@ -9411,7 +9415,9 @@ const handleSelectMode = (value: any) => {
   } else {
     showQuickView.value = false;
     stopSlideShow();
-    config.rightPanel.show = false;
+    if (config.rightPanel.mode === 'dedup') {
+      config.rightPanel.show = false;
+    }
   }
 };
 

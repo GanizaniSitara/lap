@@ -1,13 +1,14 @@
 <template>
-  <div class="w-full h-full rounded-box bg-base-200 flex flex-col overflow-hidden">
+  <div class="w-full h-full bg-base-200 flex flex-col overflow-hidden select-none">
     <!-- Header & Close -->
-    <div class="my-2 px-2 flex items-center w-full shrink-0">
-      <div class="flex-1 pl-1">
-        <span class="text-sm font-semibold text-primary/70">
+    <div class="h-10 px-3 flex items-center justify-between w-full shrink-0 border-b border-base-content/10 bg-base-200">
+      <div class="flex items-center gap-2 flex-1 min-w-0">
+        <IconInformation class="w-4 h-4 text-primary shrink-0" />
+        <span class="text-sm font-semibold text-base-content/90 truncate">
           {{ $t('file_info.title') }}
         </span>
       </div>
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-1 shrink-0">
         <TButton
           :icon="IconClose"
           :tooltip="$t('msgbox.close')"
@@ -489,6 +490,7 @@ import {
   IconLivePhoto,
   IconBookmark,
   IconPerson,
+  IconInformation,
 } from '@/common/icons';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import TButton from '@/components/TButton.vue';
