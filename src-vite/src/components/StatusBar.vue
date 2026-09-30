@@ -57,7 +57,8 @@
     <div class="flex items-center gap-1.5 shrink-0 ml-auto pl-2">
       <div
         v-if="showUpdateIcon"
-        class="px-1.5 py-0.5 flex items-center gap-1 rounded-full bg-base-200 text-primary/70 text-[11px] font-mono mr-1"
+        class="px-1.5 py-0.5 flex items-center gap-1 rounded-full bg-base-200 text-primary/70 text-[11px] font-mono mr-1 cursor-pointer hover:bg-base-300"
+        @click.stop="emit('toggle-scan')"
       >
         <component :is="updateIconComponent" class="t-icon-size-xs shrink-0" :class="{ 'animate-spin': isUpdateAnimating }" />
         <span v-if="scanText" class="truncate text-right max-w-[120px]">{{ scanText }}</span>
@@ -107,7 +108,7 @@ import {
   IconInformation,
 } from '@/common/icons';
 
-const emit = defineEmits(['toggle-info']);
+const emit = defineEmits(['toggle-info', 'toggle-scan']);
 
 const props = defineProps({
   fileList: {

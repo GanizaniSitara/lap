@@ -528,6 +528,7 @@
       :empty-message="statusBarEmptyMessage"
       :is-info-open="isInfoPanelOpen"
       @toggle-info="toggleInfoPanel"
+      @toggle-scan="handleToggleScan"
     />
   </div>
 
@@ -4824,6 +4825,11 @@ const cancelIndexRecovery = () => {
 const activeScanningAlbumId = computed(() => Number(libConfig.index.albumQueue[0] || 0));
 const suppressNextIndexingIdleRefresh = ref(false);
 const selectedAlbumIdForStatusBar = computed(() => Number(libConfig.album.id || 0));
+const handleToggleScan = () => {
+  if (selectedAlbumIdForStatusBar.value) {
+    tauriEmit('album-toggle-index', { id: selectedAlbumIdForStatusBar.value });
+  }
+};
 const selectedAlbumScanState = computed(() => getAlbumScanState({
   albumId: selectedAlbumIdForStatusBar.value,
   albumQueue: libConfig.index.albumQueue as any[],

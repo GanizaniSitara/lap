@@ -341,6 +341,7 @@ let unlistenIndexProgress: (() => void) | undefined;
 let unlistenIndexFinished: (() => void) | undefined;
 let unlistenAlbumsRefreshed: (() => void) | undefined;
 let unlistenAlbumFolderPathsMigrated: (() => void) | undefined;
+let unlistenAlbumToggleIndex: (() => void) | undefined;
 let albumCountRequest = 0;
 
 async function refreshAlbumVisibleCounts() {
@@ -951,6 +952,12 @@ onMounted( async () => {
     refreshFolderSearchFolders();
   });
 
+  unlistenAlbumToggleIndex = await listen('album-toggle-index', async (event: any) => {
+    const albumId = Number(event.payload?.id || 0);
+    if (albumId > 0) {
+      await toggleIndexAlbum(albumId);
+    }
+  });
 });
 
 watch(() => config.settings.folderSort, async () => {
@@ -993,6 +1000,7 @@ onBeforeUnmount(() => {
   if (unlistenIndexFinished) unlistenIndexFinished();
   if (unlistenAlbumsRefreshed) unlistenAlbumsRefreshed();
   if (unlistenAlbumFolderPathsMigrated) unlistenAlbumFolderPathsMigrated();
+  if (unlistenAlbumToggleIndex) unlistenAlbumToggleIndex();
   uiStore.removeInputHandler('AlbumListDrag');
 });
 
