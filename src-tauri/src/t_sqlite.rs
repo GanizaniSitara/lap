@@ -1406,18 +1406,6 @@ impl AFolder {
         Ok(result)
     }
 
-    pub fn is_ai_excluded_with_conn(conn: &Connection, folder_id: i64) -> Result<bool, String> {
-        let result = conn
-            .query_row(
-                "SELECT COALESCE(ai_excluded, 0) FROM afolders WHERE id = ?1",
-                params![folder_id],
-                |row| row.get(0),
-            )
-            .optional()
-            .map_err(|e| e.to_string())?;
-        Ok(result.unwrap_or(false))
-    }
-
     // get all favorite folders
     pub fn get_favorite_folders() -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
