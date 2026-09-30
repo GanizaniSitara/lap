@@ -111,15 +111,9 @@
           >
             <div
               :class="[
-                'sidebar-item gap-2 group transition-all',
+                'sidebar-item gap-2 group',
                 selectedPerson && selectedPerson.id === person.id && !isRenamingPerson ? 'sidebar-item-selected' : 'sidebar-item-hover',
-                dropTargetPersonId === person.id ? 'ring-2 ring-primary bg-primary/20' : '',
               ]"
-              draggable="true"
-              @dragstart="onDragStartPerson(person, $event)"
-              @dragover.prevent="onDragOverPerson(person, $event)"
-              @dragleave="onDragLeavePerson(person, $event)"
-              @drop.prevent.stop="onDropPerson(person, $event)"
               @click="selectPerson(person)"
               @contextmenu.prevent.stop="(e: MouseEvent) => handlePersonContextMenu(person, e)"
             >
@@ -199,15 +193,9 @@
           >
             <div
               :class="[
-                'sidebar-item gap-2 group transition-all',
+                'sidebar-item gap-2 group',
                 selectedPerson && selectedPerson.id === person.id && !isRenamingPerson ? 'sidebar-item-selected' : 'sidebar-item-hover',
-                dropTargetPersonId === person.id ? 'ring-2 ring-primary bg-primary/20' : '',
               ]"
-              draggable="true"
-              @dragstart="onDragStartPerson(person, $event)"
-              @dragover.prevent="onDragOverPerson(person, $event)"
-              @dragleave="onDragLeavePerson(person, $event)"
-              @drop.prevent.stop="onDropPerson(person, $event)"
               @click="selectPerson(person)"
               @contextmenu.prevent.stop="(e: MouseEvent) => handlePersonContextMenu(person, e)"
             >
@@ -506,49 +494,6 @@ const unnamedPersons = computed(() => {
   return sortedPersons.value.filter(p => !isNamedPerson(p));
 });
 
-// Drag and drop merging
-const draggedPerson = ref<any>(null);
-const dropTargetPersonId = ref<number | null>(null);
-
-function onDragStartPerson(person: any, event: DragEvent) {
-  if (isRenamingPerson.value) return;
-  draggedPerson.value = person;
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', String(person.id));
-  }
-}
-
-function onDragOverPerson(targetPerson: any, event: DragEvent) {
-  if (!draggedPerson.value || draggedPerson.value.id === targetPerson.id) return;
-  event.preventDefault();
-  if (event.dataTransfer) {
-    event.dataTransfer.dropEffect = 'move';
-  }
-  dropTargetPersonId.value = targetPerson.id;
-}
-
-function onDragLeavePerson(targetPerson: any, event: DragEvent) {
-  if (dropTargetPersonId.value === targetPerson.id) {
-    dropTargetPersonId.value = null;
-  }
-}
-
-function onDropPerson(targetPerson: any, event: DragEvent) {
-  event.preventDefault();
-  dropTargetPersonId.value = null;
-  if (!draggedPerson.value || draggedPerson.value.id === targetPerson.id) {
-    draggedPerson.value = null;
-    return;
-  }
-
-  const source = draggedPerson.value;
-  draggedPerson.value = null;
-
-  pendingMergeSource.value = source;
-  pendingMergeTarget.value = targetPerson;
-  showMergeConfirmMsgbox.value = true;
-}
 
 // Merge dialog & confirmation
 const showMergeConfirmMsgbox = ref(false);
