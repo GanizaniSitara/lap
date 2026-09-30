@@ -165,13 +165,20 @@
           />
 
           <!-- toggle info panel -->
-          <TButton
-            :icon="IconInformation"
-            :tooltip="isInfoPanelOpen ? $t('toolbar.tooltip.hide_info') : $t('toolbar.tooltip.show_info')"
-            :shortcut="shortcut('meta.info')"
-            :selected="isInfoPanelOpen"
+          <button
+            type="button"
+            :class="[
+              'btn btn-ghost btn-xs h-7 px-2 flex items-center gap-1 text-xs font-medium rounded-box transition-colors cursor-pointer select-none border',
+              isInfoPanelOpen 
+                ? 'bg-primary/20 text-primary border-primary/30 hover:bg-primary/30' 
+                : 'text-base-content/70 border-base-content/10 hover:text-base-content hover:bg-base-100/40'
+            ]"
+            :title="`${isInfoPanelOpen ? $t('toolbar.tooltip.hide_info') : $t('toolbar.tooltip.show_info')} (${shortcut('meta.info')})`"
             @click="toggleInfoPanel"
-          />
+          >
+            <IconInformation class="w-4 h-4 shrink-0" :class="isInfoPanelOpen ? 'text-primary' : ''" />
+            <span class="text-xs font-semibold">Info</span>
+          </button>
         </div>
       </div>
     </div>

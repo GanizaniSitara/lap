@@ -14,7 +14,7 @@
       />
     </div>
 
-    <div v-if="isMainPane" class="mx-0.5 mb-1 px-0.5 shrink-0">
+    <div v-if="isMainPane" class="mr-0.5 mb-1 pr-0.5 shrink-0">
       <div
         :class="[
           'h-7 flex items-center rounded-box transition-colors bg-base-100/40',
@@ -92,7 +92,7 @@
             :data-file-drop-path="album.is_accessible === false ? undefined : album.path"
             :data-file-drop-album-id="album.is_accessible === false ? undefined : album.id"
             :class="[
-              'mx-0.5 px-0.5 py-0.5 min-h-[28px] h-7 flex items-center rounded whitespace-nowrap cursor-pointer group border border-transparent transition-all duration-150 ease-in-out',
+              'mr-0.5 pr-0.5 py-0.5 min-h-[28px] h-7 flex items-center rounded whitespace-nowrap cursor-pointer group border border-transparent transition-all duration-150 ease-in-out',
               selection.albumId.value === album.id
                 ? (selection.selected.value ? `${isMainSourceActive ? 'text-primary' : 'text-base-content/70 bg-base-100/30 hover:bg-base-100/70'} bg-base-100 hover:bg-base-100` : 'text-base-content hover:bg-base-100/30')
                 : 'hover:text-base-content hover:bg-base-100/30',
@@ -199,7 +199,7 @@
           >
             <div
               v-if="isFolderFiltering ? shouldShowFilteredFolderTree(album.id) : album.is_expanded"
-              class="ml-0.5 mr-0.5 my-0.5 p-0.5 rounded bg-base-300/20 border border-base-content/5 shadow-none"
+              class="mr-0.5 my-0.5 py-0.5 pr-0.5 rounded bg-base-300/20 border border-base-content/5 shadow-none"
             >
               <AlbumFolder
                 :children="isFolderFiltering ? getFilteredFolderTree(album.id) : album.children"

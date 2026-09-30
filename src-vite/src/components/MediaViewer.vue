@@ -24,6 +24,15 @@
       </div>
       <div ref="buttonsRef" class="flex items-center space-x-1">
         <TButton
+          :icon="IconWand"
+          :disabled="fileIndex < 0 || isSlideShow || !canInteract || (file?.file_type && file?.file_type !== 1 && file?.file_type !== 3)"
+          :selected="isAutoEnhanced && !isSlideShow"
+          :tooltip="$t('image_viewer.toolbar.auto_enhance') || 'Magic Wand'"
+          aria-label="Magic Wand"
+          title="Magic Wand"
+          @click="handleToggleAutoEnhance"
+        />
+        <TButton
           :icon="IconPrev"
           :disabled="fileIndex <= 0 || isSlideShow || !canInteract"
           :tooltip="$t('image_viewer.toolbar.prev')"
@@ -167,23 +176,23 @@
             :shortcut="shortcut('meta.rotate')"
             @click="$emit('item-action', { action: 'rotate', index: fileIndex })"
           />
-          <TButton
-            :icon="IconWand"
-            :disabled="fileIndex < 0 || isSlideShow || !canInteract || (file?.file_type && file?.file_type !== 1 && file?.file_type !== 3)"
-            :selected="isAutoEnhanced && !isSlideShow"
-            :tooltip="$t('image_viewer.toolbar.auto_enhance') || 'Magic Wand'"
-            aria-label="Magic Wand"
-            title="Magic Wand"
-            @click="handleToggleAutoEnhance"
-          />
-          <!-- <TButton
+          <button
             v-if="mode !== 2"
-            :icon="IconFileInfo"
+            type="button"
             :disabled="fileIndex < 0 || isSlideShow || !canInteract"
-            :tooltip="$t('menu.meta.info')"
-            :shortcut="shortcut('meta.info')"
+            :class="[
+              'btn btn-ghost btn-xs h-7 px-2 flex items-center gap-1 text-xs font-medium rounded-box transition-colors cursor-pointer select-none border',
+              config.rightPanel.show && !isSlideShow
+                ? 'bg-primary/20 text-primary border-primary/30 hover:bg-primary/30'
+                : 'text-base-content/70 border-base-content/10 hover:text-base-content hover:bg-base-100/40',
+              fileIndex < 0 || isSlideShow || !canInteract ? 'pointer-events-none opacity-30' : ''
+            ]"
+            :title="config.rightPanel.show ? $t('toolbar.tooltip.hide_info') : $t('toolbar.tooltip.show_info')"
             @click="$emit('item-action', { action: 'info', index: fileIndex })"
-          /> -->
+          >
+            <IconInformation class="w-4 h-4 shrink-0" :class="config.rightPanel.show && !isSlideShow ? 'text-primary' : ''" />
+            <span class="text-xs font-semibold">Info</span>
+          </button>
         </template>
         <!-- Linked viewport control (Compare mode only) -->
         <template v-if="mode === 2 && showSyncViewportControl">
@@ -487,6 +496,7 @@ import {
   IconComment,
   IconRotate,
   IconFileInfo,
+  IconInformation,
   IconDot,
   IconWinMinus,
   IconWinMaximize,
