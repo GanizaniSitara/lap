@@ -4012,7 +4012,6 @@ pub async fn index_album_worker(
     // 4. Traverse and index
     let mut is_cancelled = false;
     let mut traversal_failed = false;
-    let mut traversed_count = 0u64;
     // WalkDir already visits every directory during indexing.  Record the
     // direct-parent relationship here so the sidebar never needs to rescan an
     // unchanged directory just to decide whether to show its expand arrow.
@@ -4103,7 +4102,6 @@ pub async fn index_album_worker(
                         });
                         tracker.maybe_emit();
                     });
-                    traversed_count += 1;
                     continue;
                 }
 
@@ -4137,7 +4135,6 @@ pub async fn index_album_worker(
                                 });
                                 tracker.maybe_emit();
                             });
-                            traversed_count += 1;
                             continue;
                         }
                         if let Some(task) = outcome.task {
@@ -4184,8 +4181,6 @@ pub async fn index_album_worker(
                         });
                     }
                 }
-
-                traversed_count += 1;
             } else if !is_ignored_scan_sidecar(entry.path()) {
                 let file_size = entry.metadata().map(|metadata| metadata.len()).unwrap_or(0);
                 with_progress_tracker(&tracker, |tracker| {
