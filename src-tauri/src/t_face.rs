@@ -741,13 +741,46 @@ pub fn run_face_indexing(
             }
         };
 
-        for (file_id, file_path, width, height) in files {
+        let mut excluded_folder_cache: std::collections::HashMap<i64, bool> =
+            std::collections::HashMap::new();
+
+        for (file_id, file_path, width, height, folder_id) in files {
             if *cancel_token.lock().unwrap() {
                 cancelled = true;
                 break;
             }
 
             current += 1;
+
+            // Check if folder is marked as faces_excluded; if so, explicitly skip face detection
+            let is_excluded = match excluded_folder_cache.get(&folder_id) {
+                Some(&excluded) => excluded,
+                None => {
+                    let excluded = t_sqlite::AFolder::is_faces_excluded_with_conn(&db_conn, folder_id)
+                        .unwrap_or(false);
+                    excluded_folder_cache.insert(folder_id, excluded);
+                    excluded
+                }
+            };
+
+            if is_excluded {
+                if current % 10 == 0 || current == total_files {
+                    let mut progress = progress_token.lock().unwrap();
+                    progress.current = current;
+                    progress.faces_found = total_faces;
+
+                    let _ = app_handle.emit(
+                        "face_index_progress",
+                        serde_json::json!({
+                            "current": current,
+                            "total": total_files,
+                            "faces_found": total_faces,
+                            "phase": "indexing"
+                        }),
+                    );
+                }
+                continue;
+            }
 
             let mut engine = face_state.0.lock().unwrap();
 

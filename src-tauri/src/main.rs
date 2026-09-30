@@ -356,6 +356,8 @@ async fn main() {
             t_cmds::set_folder_favorite,
             t_cmds::get_folder_search_excluded,
             t_cmds::set_folder_search_excluded,
+            t_cmds::get_folder_faces_excluded,
+            t_cmds::set_folder_faces_excluded,
             t_cmds::set_file_favorite,
             t_cmds::set_file_rating,
             t_cmds::set_file_culling_flag,

@@ -3969,6 +3969,17 @@ function handleItemAction(payload: { action: string, index: number }) {
     return;
   }
 
+  if (action === 'auto-enhance') {
+    const file = fileList.value[selectedItemIndex.value];
+    if (file) {
+      if ((payload as any).edits !== undefined) {
+        file.edits = (payload as any).edits;
+      }
+      void syncFileMetaToImageViewer(file.id, { edits: file.edits });
+    }
+    return;
+  }
+
   if (action.startsWith('culling-')) {
     const cullingFlag = action === 'culling-pick'
       ? 1

@@ -323,6 +323,7 @@ export async function getAllAlbums(refreshAccessibility = false) {
         const album = albums[i];
         album.is_favorite = await getFolderFavorite(album.path);
         album.is_excluded_from_search = await getFolderSearchExcluded(album.path);
+        album.faces_excluded = await getFolderFacesExcluded(album.path);
       }
 
       return albums;
@@ -543,11 +544,13 @@ export async function fetchFolder(path, isRecursive, sort = 0) {
       // get root folder status
       folder.is_favorite = await getFolderFavorite(folder.path);
       folder.is_excluded_from_search = await getFolderSearchExcluded(folder.path);
+      folder.faces_excluded = await getFolderFacesExcluded(folder.path);
       // get folder children's favorite status
       for (let i = 0; i < folder.children.length; i++) {
         const child = folder.children[i];
         child.is_favorite = await getFolderFavorite(child.path);
         child.is_excluded_from_search = await getFolderSearchExcluded(child.path);
+        child.faces_excluded = await getFolderFacesExcluded(child.path);
       }
       console.log('fetchFolder:', folder);
       return folder;
@@ -1281,6 +1284,17 @@ export async function updateFileInfo(fileId, filePath) {
   return null;
 }
 
+// toggle auto enhance non-destructive edit
+export async function toggleAutoEnhance(fileId, enable) {
+  try {
+    await invoke('toggle_auto_enhance', { fileId, enable });
+    return true;
+  } catch (error) {
+    console.error('Failed to toggle auto enhance:', error);
+  }
+  return false;
+}
+
 export async function importFile(filePath, folderId, folderPath) {
   try {
     const result = await invoke('import_file', { filePath, folderId, folderPath });
@@ -1472,6 +1486,32 @@ export async function setFolderSearchExcluded(albumId, folderPath, isExcluded) {
     };
   } catch (error) {
     console.log('Failed to set folder search exclusion:', error);
+  }
+  return null;
+}
+
+// get folder face detection exclusion
+export async function getFolderFacesExcluded(folderPath) {
+  try {
+    const isExcluded = await invoke('get_folder_faces_excluded', { folderPath });
+    if(isExcluded) {
+      return isExcluded;
+    };
+  } catch (error) {
+    console.log('Failed to get folder faces exclusion:', error);
+  }
+  return false;
+}
+
+// set folder face detection exclusion
+export async function setFolderFacesExcluded(albumId, folderPath, isExcluded) {
+  try {
+    const result = await invoke('set_folder_faces_excluded', { albumId, folderPath, isExcluded });
+    if(result) {
+      return result;
+    };
+  } catch (error) {
+    console.log('Failed to set folder faces exclusion:', error);
   }
   return null;
 }

@@ -335,9 +335,14 @@ const isThumbnailLoaded = ref(false);
 let thumbnailRetryCount = 0;
 
 watch(
-  () => [props.file?.id, props.file?.thumbnail],
-  ([, src]) => {
-    thumbnailSrc.value = String(src || '');
+  () => [props.file?.id, props.file?.thumbnail, props.file?.edits],
+  ([, src], oldVals) => {
+    const editsChanged = oldVals && oldVals[2] !== undefined && oldVals[2] !== props.file?.edits;
+    if (editsChanged && props.file?.id) {
+      thumbnailSrc.value = getThumbUrl(props.file.id, true, config.settings.thumbnailSize, Number(props.file.modified_at || 0));
+    } else {
+      thumbnailSrc.value = String(src || '');
+    }
     isThumbnailLoaded.value = false;
     thumbnailRetryCount = 0;
   },

@@ -1366,6 +1366,32 @@ impl AFolder {
         Ok(result)
     }
 
+    // get a folder's faces_excluded status
+    pub fn get_faces_excluded(folder_path: &str) -> Result<Option<bool>, String> {
+        let conn = open_conn()?;
+        let result = conn
+            .query_row(
+                "SELECT COALESCE(faces_excluded, 0) FROM afolders WHERE path = ?1",
+                params![folder_path],
+                |row| row.get(0),
+            )
+            .optional()
+            .map_err(|e| e.to_string())?;
+        Ok(result)
+    }
+
+    pub fn is_faces_excluded_with_conn(conn: &Connection, folder_id: i64) -> Result<bool, String> {
+        let result = conn
+            .query_row(
+                "SELECT COALESCE(faces_excluded, 0) FROM afolders WHERE id = ?1",
+                params![folder_id],
+                |row| row.get(0),
+            )
+            .optional()
+            .map_err(|e| e.to_string())?;
+        Ok(result.unwrap_or(false))
+    }
+
     // get all favorite folders
     pub fn get_favorite_folders() -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
@@ -9201,12 +9227,12 @@ impl Face {
     }
 
     /// Get all image file IDs that haven't been processed for faces yet
-    /// Returns: Vec<(id, file_path, width, height)>
-    pub fn get_unprocessed_image_files() -> Result<Vec<(i64, String, i64, i64)>, String> {
+    /// Returns: Vec<(id, file_path, width, height, folder_id)>
+    pub fn get_unprocessed_image_files() -> Result<Vec<(i64, String, i64, i64, i64)>, String> {
         let conn = open_conn()?;
         let mut stmt = conn
             .prepare(
-                "SELECT a.id, f.path || '/' || a.name as file_path, a.width, a.height
+                "SELECT a.id, f.path || '/' || a.name as file_path, a.width, a.height, a.folder_id
                  FROM afiles a 
                  JOIN afolders f ON a.folder_id = f.id
                  WHERE a.file_type = 1 
@@ -9218,7 +9244,7 @@ impl Face {
 
         let files = stmt
             .query_map([], |row| {
-                Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?))
+                Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?))
             })
             .map_err(|e| e.to_string())?
             .collect::<Result<Vec<_>, _>>()
@@ -9791,6 +9817,11 @@ pub fn create_db() -> Result<(), String> {
     }
 }
 
+#[allow(dead_code)]
+pub fn init_db() -> Result<(), String> {
+    create_db()
+}
+
 fn create_db_internal() -> Result<(), String> {
     let conn = open_conn()?;
 
@@ -9840,6 +9871,7 @@ fn create_db_internal() -> Result<(), String> {
             modified_at INTEGER,
             is_favorite INTEGER,
             is_excluded_from_search INTEGER DEFAULT 0,
+            faces_excluded BOOLEAN DEFAULT 0,
             has_subfolders INTEGER,
             inode INTEGER,
             FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE
@@ -9996,6 +10028,15 @@ fn create_db_internal() -> Result<(), String> {
     );
     let _ = conn.execute(
         "ALTER TABLE afiles ADD COLUMN edits TEXT",
+        [],
+    );
+    // Migration: Add faces_excluded column to afolders if it doesn't exist
+    let _ = conn.execute(
+        "ALTER TABLE afolders ADD COLUMN faces_excluded BOOLEAN DEFAULT 0",
+        [],
+    );
+    let _ = conn.execute(
+        "ALTER TABLE folders ADD COLUMN faces_excluded BOOLEAN DEFAULT 0",
         [],
     );
 
@@ -10526,5 +10567,15 @@ mod album_filter_tests {
         assert!(remaining.contains(&2));
         // Other untouched files in folder 1 with last_scan_time 100 were safely swept
         assert!(!remaining.contains(&3));
+    }
+
+    #[test]
+    fn test_faces_excluded_migration_and_query() {
+        let conn = fixture();
+        conn.execute("ALTER TABLE afolders ADD COLUMN faces_excluded BOOLEAN DEFAULT 0", []).unwrap();
+        assert!(!AFolder::is_faces_excluded_with_conn(&conn, 1).unwrap());
+        conn.execute("UPDATE afolders SET faces_excluded = 1 WHERE id = 1", []).unwrap();
+        assert!(AFolder::is_faces_excluded_with_conn(&conn, 1).unwrap());
+        assert!(!AFolder::is_faces_excluded_with_conn(&conn, 2).unwrap());
     }
 }

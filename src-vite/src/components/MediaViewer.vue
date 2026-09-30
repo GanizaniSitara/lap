@@ -167,6 +167,15 @@
             :shortcut="shortcut('meta.rotate')"
             @click="$emit('item-action', { action: 'rotate', index: fileIndex })"
           />
+          <TButton
+            :icon="IconSparkles"
+            :disabled="fileIndex < 0 || isSlideShow || !canInteract || (file?.file_type && file?.file_type !== 1 && file?.file_type !== 3)"
+            :selected="isAutoEnhanced && !isSlideShow"
+            :tooltip="$t('image_viewer.toolbar.auto_enhance') || 'Magic Wand'"
+            aria-label="Magic Wand"
+            title="Magic Wand"
+            @click="handleToggleAutoEnhance"
+          />
           <!-- <TButton
             v-if="mode !== 2"
             :icon="IconFileInfo"
@@ -360,6 +369,7 @@
           :fileId="file?.id"
           :fileType="file?.file_type"
           :fileVersion="file?.modified_at || 0"
+          :edits="file?.edits"
           :imageWidth="file?.width"
           :imageHeight="file?.height"
           :thumbnailSrc="file?.thumbnail || ''"
@@ -435,12 +445,14 @@
 import { defineAsyncComponent, ref, computed, watch, onMounted, onBeforeUnmount, type Component, type CSSProperties } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { invoke } from '@tauri-apps/api/core';
 import { runPreviewWindowOperation, recoverPreviewWindowFocus } from '@/common/previewWindow';
 import { config, libConfig } from '@/common/config';
 import { useToast } from '@/common/toast';
-import { isWin, isMac, isLinux, getSlideShowInterval } from '@/common/utils';
+import { isWin, isMac, isLinux, getSlideShowInterval, clearCachedThumbnailDataUrl } from '@/common/utils';
 import { getShortcutLabel, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
 import { getMotionPhotoVideoPath } from '@/common/api';
+import { useUIStore } from '@/stores/uiStore';
 
 import Image from '@/components/Image.vue';
 import TButton from '@/components/TButton.vue';
@@ -483,6 +495,7 @@ import {
   IconPalette,
   IconVideoPlay,
   IconLivePhoto,
+  IconSparkles,
 } from '@/common/icons';
 import ContextMenu from '@/components/ContextMenu.vue';
 import iconLogo from '@/assets/images/icon.png';
@@ -1303,6 +1316,64 @@ const handleMessageFromImageViewer = (payload: { message: string }) => {
   }
 };
 
+const uiStore = useUIStore();
+
+const isAutoEnhanced = computed(() => {
+  const edits = props.file?.edits;
+  if (!edits) return false;
+  if (typeof edits === 'object') {
+    return !!edits.auto_enhance;
+  }
+  if (typeof edits === 'string') {
+    try {
+      const parsed = JSON.parse(edits);
+      return !!parsed?.auto_enhance;
+    } catch {
+      return false;
+    }
+  }
+  return false;
+});
+
+const handleToggleAutoEnhance = async () => {
+  const currentFile = props.file;
+  if (!currentFile || !currentFile.id) return;
+  const isActive = isAutoEnhanced.value;
+  const enable = !isActive;
+
+  try {
+    await invoke('toggle_auto_enhance', { fileId: currentFile.id, enable });
+
+    let editsObj: Record<string, any> = {};
+    if (typeof currentFile.edits === 'string' && currentFile.edits.trim()) {
+      try {
+        editsObj = JSON.parse(currentFile.edits);
+      } catch {}
+    } else if (typeof currentFile.edits === 'object' && currentFile.edits) {
+      editsObj = { ...currentFile.edits };
+    }
+    editsObj.auto_enhance = enable;
+    const newEditsStr = JSON.stringify(editsObj);
+    currentFile.edits = newEditsStr;
+
+    if (currentFile.file_path) {
+      uiStore.updateFileVersion(currentFile.file_path);
+      clearPreloadCache(currentFile.file_path);
+    }
+    clearCachedThumbnailDataUrl(currentFile.id);
+
+    emit('item-action', {
+      action: 'auto-enhance',
+      index: props.fileIndex,
+      fileId: currentFile.id,
+      enable,
+      edits: newEditsStr,
+    });
+  } catch (error) {
+    console.error('Failed to toggle auto enhance:', error);
+  }
+};
+
 defineExpose({
   isFullScreen,
   exitPreviewFullScreen,
@@ -1317,7 +1388,8 @@ defineExpose({
   clearPreloadCache,
   showMessage,
   triggerPrev,
-  triggerNext
+  triggerNext,
+  toggleAutoEnhance: handleToggleAutoEnhance,
 });
 
 const selectedFile = computed(() => props.file);

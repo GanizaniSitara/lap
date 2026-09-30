@@ -530,8 +530,9 @@ export function getPreviewUrl(
   return query ? `${base}?${query}` : base;
 }
 
-export function shouldUseBackendPreview(filePath = '', fileType = 0): boolean {
+export function shouldUseBackendPreview(filePath = '', fileType = 0, isAutoEnhanced = false): boolean {
   if (!filePath) return false;
+  if (isAutoEnhanced) return true;
   if (Number(fileType) === 3) return true;
 
   const extension = getFileExtension(filePath).toLowerCase();

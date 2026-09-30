@@ -213,11 +213,12 @@
 import { ref, watch, computed, onMounted, onUnmounted, reactive } from 'vue';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen } from '@tauri-apps/api/event';
+import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
-import { isWin, isMac, isLinux, setTheme, getSlideShowInterval, SCALE_VALUES } from '@/common/utils';
+import { isWin, isMac, isLinux, setTheme, getSlideShowInterval, SCALE_VALUES, clearCachedThumbnailDataUrl } from '@/common/utils';
 import { matchesShortcut, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
 import {
   editFileComment,
@@ -1317,6 +1318,34 @@ const clickRotate = async (pane: Pane = 'left', rotateDelta = 90) => {
   syncFileMetaToContent(currentFileId, { rotate });
 };
 
+const toggleAutoEnhance = async (pane: Pane = 'left') => {
+  const target = getFileInfoByPane(pane);
+  const currentFileId = getFileIdByPane(pane);
+  if (!target || currentFileId <= 0) return;
+
+  let editsObj: any = {};
+  if (typeof target.edits === 'string' && target.edits.trim()) {
+    try {
+      editsObj = JSON.parse(target.edits);
+    } catch {}
+  } else if (typeof target.edits === 'object' && target.edits) {
+    editsObj = { ...target.edits };
+  }
+  const enable = !editsObj.auto_enhance;
+  editsObj.auto_enhance = enable;
+  const newEditsStr = JSON.stringify(editsObj);
+
+  await invoke('toggle_auto_enhance', { fileId: currentFileId, enable });
+  target.edits = newEditsStr;
+  applyFileMetaToPanes(currentFileId, { edits: newEditsStr });
+  if (target.file_path) {
+    uiStore.updateFileVersion(target.file_path);
+    getViewerRef(pane)?.clearPreloadCache?.(target.file_path);
+  }
+  clearCachedThumbnailDataUrl(currentFileId);
+  syncFileMetaToContent(currentFileId, { edits: newEditsStr });
+};
+
 const clickTag = (pane: Pane = 'left') => {
   const currentFileId = getFileIdByPane(pane);
   if (currentFileId <= 0) return;
@@ -1417,7 +1446,7 @@ async function syncTagStates(fileStates: Array<{ file_id: number; has_tags: bool
   }
 }
 
-const handleItemAction = async (payload: { action: string }) => {
+const handleItemAction = async (payload: { action: string, [key: string]: any }) => {
   const pane = getActiveFilePane();
 
   switch (payload.action) {
@@ -1426,6 +1455,14 @@ const handleItemAction = async (payload: { action: string }) => {
       break;
     case 'rotate':
       await clickRotate(pane);
+      break;
+    case 'auto-enhance':
+      if (payload.fileId && payload.edits !== undefined) {
+        applyFileMetaToPanes(payload.fileId, { edits: payload.edits });
+        syncFileMetaToContent(payload.fileId, { edits: payload.edits });
+      } else {
+        await toggleAutoEnhance(pane);
+      }
       break;
     case 'tag':
       clickTag(pane);

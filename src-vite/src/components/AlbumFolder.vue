@@ -154,7 +154,7 @@ import { isMac, shortenFilename, isValidFileName, getFolderPath, getFullPath, no
 import {
   createFolder, renameFolder, fetchFolder, getAllAlbums, moveFolder, moveFolderOutsideLibrary,
   copyFolder, checkFileExists, revealPath, deleteFolder, deleteFolderPermanently, recountAlbum, selectFolder as selectFolderInDb,
-  setFolderFavorite, setFolderSearchExcluded, hasImportableClipboard, refreshAlbumSubfolders,
+  setFolderFavorite, setFolderSearchExcluded, getFolderFacesExcluded, setFolderFacesExcluded, hasImportableClipboard, refreshAlbumSubfolders,
 } from '@/common/api';
 import { DEFAULT_PLATFORM, getShortcutLabel } from '@/common/shortcuts';
 import { Album, Folder } from '@/common/types';
@@ -180,7 +180,8 @@ import {
   IconRefresh,
   IconClipboard,
   IconHeart,
-  IconHeartFilled
+  IconHeartFilled,
+  IconPerson
 } from '@/common/icons';
 
 // used for cross-component communication (Content.vue listens for this event)
@@ -322,6 +323,9 @@ const treeRootRef = ref<HTMLElement | null>(null);
 const getMenuItemsForFolder = async (folder: any) => {
   const isRoot = folder.path === props.rootPath;
   const canPaste = await hasImportableClipboard();
+  if (folder && folder.faces_excluded === undefined && folder.path) {
+    folder.faces_excluded = await getFolderFacesExcluded(folder.path);
+  }
   return [
     {
       label: folder?.is_favorite ? localeMsg.value.menu.meta.unfavorite : localeMsg.value.menu.meta.favorite,
@@ -413,6 +417,13 @@ const getMenuItemsForFolder = async (folder: any) => {
       icon: folder?.is_excluded_from_search ? IconFolder : IconFolderOff,
       action: () => {
         toggleFolderSearchExcluded(folder);
+      }
+    },
+    {
+      label: folder?.faces_excluded ? "Enable Face Detection" : "Disable Face Detection",
+      icon: IconPerson,
+      action: () => {
+        void toggleFolderFacesExcluded(folder);
       }
     },
     {
@@ -1042,6 +1053,23 @@ const toggleFolderSearchExcluded = async (folder: Folder) => {
       tauriEmit('albums-refreshed', { albums: [album], refreshFolders: false });
     }
     tauriEmit('library-total-refreshed');
+  }
+};
+
+/// toggle whether folder is excluded from face detection
+const toggleFolderFacesExcluded = async (folder: Folder) => {
+  if (!folder?.path || !props.albumId) {
+    return;
+  }
+
+  if (folder.faces_excluded === undefined) {
+    folder.faces_excluded = await getFolderFacesExcluded(folder.path);
+  }
+
+  const nextValue = !folder.faces_excluded;
+  const result = await setFolderFacesExcluded(props.albumId, folder.path, nextValue);
+  if (result !== null) {
+    folder.faces_excluded = nextValue;
   }
 };
 

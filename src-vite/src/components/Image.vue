@@ -252,11 +252,28 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  edits: {
+    type: [String, Object],
+    default: null,
+  },
 });
 
 const emit = defineEmits(['message-from-image-viewer', 'scale', 'update:isZoomFit', 'viewport-change', 'context-menu']);
 
 const uiStore = useUIStore();
+
+const isAutoEnhanced = computed(() => {
+  if (!props.edits) return false;
+  if (typeof props.edits === 'object') return !!(props.edits as any).auto_enhance;
+  if (typeof props.edits === 'string') {
+    try {
+      return !!JSON.parse(props.edits)?.auto_enhance;
+    } catch {
+      return false;
+    }
+  }
+  return false;
+});
 
 // container
 const container = ref(null);
@@ -414,7 +431,7 @@ function waitForNextPaint() {
 
 // inline loading for formats that require backend preview decoding
 const showInlineLoading = computed(() =>
-  props.showInlineLoading || (shouldUseBackendPreview(props.filePath, Number(props.fileType || 0)) && !!displayThumbnailSrc.value)
+  props.showInlineLoading || (shouldUseBackendPreview(props.filePath, Number(props.fileType || 0), isAutoEnhanced.value) && !!displayThumbnailSrc.value)
 );
 
 async function getEffectiveThumbnailSrc() {
@@ -540,7 +557,7 @@ function loadImageResource(filePath?: string) {
       reject(new Error(`Error loading image: ${filePath}`));
     };
 
-    if (shouldUseBackendPreview(filePath, Number(props.fileType || 0))) {
+    if (shouldUseBackendPreview(filePath, Number(props.fileType || 0), isAutoEnhanced.value)) {
       src = getPreviewUrl(
         props.fileId,
         filePath,
@@ -579,7 +596,7 @@ function loadImageResource(filePath?: string) {
 }
 
 function warmImage(filePath?: string) {
-  if (!filePath || filePath === props.filePath || shouldUseBackendPreview(filePath, Number(props.fileType || 0))) {
+  if (!filePath || filePath === props.filePath || shouldUseBackendPreview(filePath, Number(props.fileType || 0), isAutoEnhanced.value)) {
     return;
   }
 
@@ -1227,8 +1244,10 @@ const updatePosition = () => {
 watch([
   () => props.filePath,
   () => props.fileVersion,
+  () => props.filePath ? uiStore.getFileVersion(props.filePath) : 0,
+  () => isAutoEnhanced.value,
   () => Number(props.fileType || 0) === 3 ? config.settings.rawThumbnailSource : '',
-], async ([newFilePath, newFileVersion, newRawThumbnailSource], [oldFilePath, oldFileVersion, oldRawThumbnailSource]) => {
+], async ([newFilePath, newFileVersion, newLocalVersion, newAutoEnhanced, newRawThumbnailSource], [oldFilePath, oldFileVersion, oldLocalVersion, oldAutoEnhanced, oldRawThumbnailSource]) => {
   // Cancel previous loading
   currentLoadingId.value++;
   const loadingId = currentLoadingId.value;
@@ -1236,7 +1255,7 @@ watch([
   if (
     newFilePath
     && newFilePath === oldFilePath
-    && (newFileVersion !== oldFileVersion || newRawThumbnailSource !== oldRawThumbnailSource)
+    && (newFileVersion !== oldFileVersion || newLocalVersion !== oldLocalVersion || newAutoEnhanced !== oldAutoEnhanced || newRawThumbnailSource !== oldRawThumbnailSource)
   ) {
     preloadCache.delete(newFilePath);
   }
@@ -1259,7 +1278,7 @@ watch([
     isLoading.value = true;
   }, 500);
 
-  const usesBackendPreview = shouldUseBackendPreview(newFilePath, Number(props.fileType || 0));
+  const usesBackendPreview = shouldUseBackendPreview(newFilePath, Number(props.fileType || 0), isAutoEnhanced.value);
   const ffmpegExtensionsPromise = getFfmpegBackedPreviewExtensions();
   const isRawPreview = Number(props.fileType || 0) === 3;
 
@@ -1394,7 +1413,7 @@ watch(displayThumbnailSrc, async (newThumbSrc) => {
   if (!currentFilePath) return;
   const loadingId = currentLoadingId.value;
 
-  const usesBackendPreview = shouldUseBackendPreview(currentFilePath, Number(props.fileType || 0));
+  const usesBackendPreview = shouldUseBackendPreview(currentFilePath, Number(props.fileType || 0), isAutoEnhanced.value);
   const ffmpegExtensions = await getFfmpegBackedPreviewExtensions();
   if (!usesBackendPreview || ffmpegExtensions.has(getFileExtension(currentFilePath).toLowerCase())) return;
 
