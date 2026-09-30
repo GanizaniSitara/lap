@@ -1179,6 +1179,7 @@
       "pin": "Pin toolbar",
       "unpin": "Unpin toolbar",
       "close": "Close",
+      "auto_enhance": "Magic Wand",
       "sync_viewport_on": "Link zoom and pan",
       "sync_viewport_off": "Unlink zoom and pan"
     }

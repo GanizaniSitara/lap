@@ -1166,6 +1166,7 @@
       "pin": "固定工具栏",
       "unpin": "取消固定工具栏",
       "close": "关闭",
+      "auto_enhance": "魔棒自动增强",
       "sync_viewport_on": "联动缩放与平移",
       "sync_viewport_off": "取消联动缩放与平移"
     }
