@@ -1,7 +1,7 @@
 {
-  "productName": "Lap",
+  "productName": "LapCasa",
   "version": "0.3.2",
-  "identifier": "com.julyx10.lap",
+  "identifier": "com.lapcasa.dev",
   "build": {
     "beforeBuildCommand": "pnpm --dir ../src-vite build",
     "beforeDevCommand": "pnpm --dir ../src-vite dev",
