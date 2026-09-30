@@ -99,7 +99,7 @@
       ></div>
       <div
         v-if="statusBadges.length > 0"
-        class="pointer-events-none absolute left-0.5 top-0.5 z-10 flex max-w-[calc(100%-2.5rem)] flex-wrap gap-0.5"
+        class="pointer-events-none absolute top-2 left-2 z-10 flex max-w-[calc(100%-2.5rem)] flex-wrap gap-0.5"
       >
         <div
           v-for="badge in statusBadges"
@@ -248,7 +248,6 @@ import { useFileMenuItems } from '@/common/fileMenu';
 
 import { 
   IconMore,
-  IconHeartFilled,
   IconTag,
   IconBookmark,
   IconRotate,
@@ -719,8 +718,8 @@ const statusBadges = computed<ThumbnailBadge[]>(() => {
   if (props.file.is_favorite) {
     badges.push({
       key: 'favorite',
-      icon: IconHeartFilled,
-      iconClass: 'text-error',
+      icon: IconStarFilled,
+      iconClass: 'text-warning',
       label: rating > 0 ? `${rating}` : undefined,
       trailingIcon: cullingIcon,
       trailingIconClass: cullingIconClass,

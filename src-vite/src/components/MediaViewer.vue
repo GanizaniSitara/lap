@@ -168,7 +168,7 @@
             @click="$emit('item-action', { action: 'rotate', index: fileIndex })"
           />
           <TButton
-            :icon="IconSparkles"
+            :icon="IconWand"
             :disabled="fileIndex < 0 || isSlideShow || !canInteract || (file?.file_type && file?.file_type !== 1 && file?.file_type !== 3)"
             :selected="isAutoEnhanced && !isSlideShow"
             :tooltip="$t('image_viewer.toolbar.auto_enhance') || 'Magic Wand'"
@@ -495,7 +495,7 @@ import {
   IconPalette,
   IconVideoPlay,
   IconLivePhoto,
-  IconSparkles,
+  IconWand,
 } from '@/common/icons';
 import ContextMenu from '@/components/ContextMenu.vue';
 import iconLogo from '@/assets/images/icon.png';
@@ -984,8 +984,8 @@ const quickViewStatusBadges = computed<StatusBadge[]>(() => {
   if (props.file?.is_favorite) {
     badges.push({
       key: 'favorite',
-      icon: IconHeartFilled,
-      iconClass: 'text-error',
+      icon: IconStarFilled,
+      iconClass: 'text-warning',
       label: rating > 0 ? `${rating}` : undefined,
       trailingIcon: cullingIcon,
       trailingIconClass: cullingIconClass,
