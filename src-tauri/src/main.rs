@@ -40,6 +40,7 @@ mod t_sqlite;
 mod t_storage;
 mod t_utils;
 mod t_video;
+pub mod t_xmp;
 
 pub use t_cmds::merge_person;
 

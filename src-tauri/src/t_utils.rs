@@ -3755,6 +3755,13 @@ fn index_single_file(
                             processed_immediately: false, search_ready_immediately: false });
                     }
                     if let Some(file_id) = file.id {
+                        // If a .xmp sidecar exists and is newer than the DB record, update rating and tags from it
+                        let _ = crate::t_xmp::check_and_sync_xmp_sidecar(
+                            file_id,
+                            path_str,
+                            file.modified_at,
+                        );
+
                         let has_thumbnail = file.has_thumbnail.unwrap_or(false);
                         let needs_thumbnail_regeneration = has_thumbnail
                             && crate::t_sqlite::AThumb::needs_thumbnail_regeneration(

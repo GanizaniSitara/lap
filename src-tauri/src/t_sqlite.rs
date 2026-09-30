@@ -8044,6 +8044,69 @@ impl ATag {
         Ok(tag)
     }
 
+    pub fn get_or_create(name: &str) -> Result<i64, String> {
+        let trimmed = name.trim();
+        if trimmed.is_empty() || trimmed.chars().count() > 255 {
+            return Err("Tag name must contain 1–255 characters".to_string());
+        }
+        let conn = open_conn()?;
+        let existing: Option<i64> = conn
+            .query_row(
+                "SELECT id FROM atags WHERE name = ?1 COLLATE NOCASE",
+                params![trimmed],
+                |r| r.get(0),
+            )
+            .optional()
+            .map_err(|e| e.to_string())?;
+
+        if let Some(id) = existing {
+            return Ok(id);
+        }
+        drop(conn);
+        let tag = Self::add(trimmed, None)?;
+        Ok(tag.id)
+    }
+
+    pub fn sync_tags_for_file(file_id: i64, tag_names: &[String]) -> Result<(), String> {
+        let mut target_tag_ids = Vec::new();
+        for name in tag_names {
+            let trimmed = name.trim();
+            if !trimmed.is_empty() {
+                if let Ok(id) = Self::get_or_create(trimmed) {
+                    if !target_tag_ids.contains(&id) {
+                        target_tag_ids.push(id);
+                    }
+                }
+            }
+        }
+        let mut conn = open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        tx.execute(
+            "DELETE FROM afile_tags WHERE file_id = ?1",
+            params![file_id],
+        )
+        .map_err(|e| e.to_string())?;
+
+        {
+            let mut insert_stmt = tx
+                .prepare_cached("INSERT OR IGNORE INTO afile_tags (file_id, tag_id) VALUES (?1, ?2)")
+                .map_err(|e| e.to_string())?;
+            for tag_id in &target_tag_ids {
+                insert_stmt.execute(params![file_id, tag_id]).map_err(|e| e.to_string())?;
+            }
+        }
+
+        let has_tags = if target_tag_ids.is_empty() { 0 } else { 1 };
+        tx.execute(
+            "UPDATE afiles SET has_tags = ?1 WHERE id = ?2",
+            params![has_tags, file_id],
+        )
+        .map_err(|e| e.to_string())?;
+
+        tx.commit().map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
     /// Get all tags from the db
     pub fn get_all(sort: i64) -> Result<Vec<Self>, String> {
         let conn = open_conn()?;
