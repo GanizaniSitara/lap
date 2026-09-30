@@ -11,7 +11,7 @@
     <li v-for="child in visibleChildren"
       :key="child.id" 
       :id="'folder-' + child.id" 
-      :class="{ 'pl-2': child.path !== rootPath }"
+      :class="{ 'pl-1': child.path !== rootPath }"
     >
       <div v-if="child.id != 0 || selection.folderPath.value == rootPath"
         :data-file-drop-path="unavailable ? undefined : child.path"
@@ -242,7 +242,7 @@ const folderClass = (folder: Folder) => {
   const selected = isSelectedFolder(folder);
   const matched = isFolderFiltering.value && matchedFolderPaths.value.has(folder.path);
   return [
-    'px-1 py-0.5 min-h-[24px] h-6 flex items-center rounded whitespace-nowrap cursor-pointer group border',
+    'px-0.5 py-0.5 min-h-[24px] h-6 flex items-center rounded whitespace-nowrap cursor-pointer group border',
     selected
       ? 'text-primary! bg-base-100 hover:bg-base-100 border-transparent'
       : 'hover:text-base-content hover:bg-base-100/30 border-transparent',
