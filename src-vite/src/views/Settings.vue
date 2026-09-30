@@ -522,6 +522,26 @@
             </div>
           </div>
 
+          <!-- folder manager -->
+          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
+            <div class="flex items-center gap-2 text-base-content/30">
+              <span class="font-bold uppercase text-[10px] tracking-widest">Folder Management</span>
+            </div>
+            <div class="flex items-center justify-between gap-4 px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
+              <div class="flex flex-col gap-0.5 text-sm leading-5">
+                <div>Folder Manager</div>
+                <div class="text-xs text-base-content/30">Configure scan scope and privacy settings for folders and libraries</div>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-ghost rounded-box bg-base-100 border border-base-content/30 text-base-content/70 hover:text-base-content"
+                @click="showFolderManager = true"
+              >
+                Folder Manager...
+              </button>
+            </div>
+          </div>
+
           <!-- data -->
           <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
             <div class="flex items-center gap-2 text-base-content/30">
@@ -664,6 +684,12 @@
       @done="onRestoreDone"
       @cancel="showRestoreDialog = false"
     />
+
+    <FolderManager
+      v-if="showFolderManager"
+      @cancel="showFolderManager = false"
+      @ok="showFolderManager = false"
+    />
   </div>
 </template>
 
@@ -700,6 +726,7 @@ import SettingsAbout from '@/components/SettingsAbout.vue';
 import MessageBox from '@/components/MessageBox.vue';
 import BackupDialog from '@/components/BackupDialog.vue';
 import RestoreDialog from '@/components/RestoreDialog.vue';
+import FolderManager from '@/components/FolderManager.vue';
 import TButton from '@/components/TButton.vue';
 
 /// i18n
@@ -729,6 +756,7 @@ const showChangeDbStorageDialog = ref(false);
 const showResetDbStorageDialog = ref(false);
 const showBackupDialog = ref(false);
 const showRestoreDialog = ref(false);
+const showFolderManager = ref(false);
 const isDownloadingMultilingualModel = ref(false);
 const isCancelingMultilingualModelDownload = ref(false);
 const multilingualModelDownloadProgress = ref(0);
@@ -1568,6 +1596,7 @@ function handleKeyDown(event: KeyboardEvent) {
       break;
     case 'Escape':
       // Close the topmost dialog first
+      if (showFolderManager.value) { showFolderManager.value = false; return; }
       if (showBackupDialog.value) { showBackupDialog.value = false; return; }
       if (showRestoreDialog.value) { showRestoreDialog.value = false; return; }
       if (showChangeDbStorageDialog.value) { showChangeDbStorageDialog.value = false; return; }

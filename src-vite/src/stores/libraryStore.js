@@ -26,6 +26,7 @@ export const useLibraryStore = defineStore('libraryStore', {
     // Current library ID (for saving)
     _libraryId: null,
     _initialized: false,
+    libraries: [],
 
 
     // Per-library state
@@ -156,6 +157,7 @@ export const useLibraryStore = defineStore('libraryStore', {
         const appConfig = await getAppConfig();
         if (appConfig) {
           this._libraryId = appConfig.current_library_id;
+          this.libraries = appConfig.libraries || [];
           setThumbLibraryId(appConfig.current_library_id);
         }
 
@@ -201,6 +203,15 @@ export const useLibraryStore = defineStore('libraryStore', {
       this._initialized = false;
       this.$reset();              // Pinia built-in: restore every field to its initial value
       await this.init();          // re-read current library id + state from backend
+    },
+
+    async fetchLibraries() {
+      const appConfig = await getAppConfig();
+      if (appConfig) {
+        this.libraries = appConfig.libraries || [];
+        return this.libraries;
+      }
+      return [];
     },
 
     /**

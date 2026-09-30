@@ -170,21 +170,41 @@
       </Transition>
     </div>
 
+    <!-- Folder Manager Button (underneath Libraries) -->
+    <div class="p-2 border-t border-base-content/10 shrink-0">
+      <button
+        type="button"
+        class="w-full h-8 px-2 flex items-center justify-center gap-2 rounded-box border border-base-content/10 bg-base-100/40 hover:bg-base-100 text-xs text-base-content/70 hover:text-base-content transition-colors cursor-pointer"
+        @click="showFolderManager = true"
+      >
+        <IconFolderCog class="w-4 h-4 shrink-0 text-base-content/60" />
+        <span class="truncate font-medium">Folder Manager...</span>
+      </button>
+    </div>
+
+    <FolderManager
+      v-if="showFolderManager"
+      @cancel="showFolderManager = false"
+      @ok="showFolderManager = false"
+    />
   </div>
 
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
 import { createEmptyLibraryCounts } from '@/stores/libraryStore';
 import { CULLING, LIB_ITEM, RATE, SIDEBAR, type LibItem } from '@/common/constants';
 
-import { IconFiles, IconHeartFilled, IconRight, IconBolt, IconFlag, IconFlagFilled, IconFlagOff, IconStar, IconStarFilled, IconHistory } from '@/common/icons';
+import { IconFiles, IconHeartFilled, IconRight, IconBolt, IconFlag, IconFlagFilled, IconFlagOff, IconStar, IconStarFilled, IconHistory, IconFolderCog } from '@/common/icons';
 import { SMART_TAG_CATEGORIES } from '@/common/smartTags';
 import { getLibraryVisibleCounts } from '@/common/api';
+import FolderManager from '@/components/FolderManager.vue';
+
+const showFolderManager = ref(false);
 
 const props = defineProps({
   titlebar: {

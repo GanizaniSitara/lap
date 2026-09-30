@@ -165,6 +165,13 @@
       @updated="onManageLibrariesUpdated"
       @cancel="showManageLibraries = false"
     />
+
+    <!-- Folder Manager Dialog -->
+    <FolderManager
+      v-if="showFolderManager"
+      @cancel="showFolderManager = false"
+      @ok="showFolderManager = false"
+    />
   </div>
 
 </template>
@@ -200,6 +207,7 @@ import Content from '@/components/Content.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
 import CollectionTray from '@/components/CollectionTray.vue';
 import ManageLibraries from '@/components/ManageLibraries.vue';
+import FolderManager from '@/components/FolderManager.vue';
 import iconLogo from '@/assets/images/icon.png';
 
 import {
@@ -335,6 +343,7 @@ const currentLibrary = computed(() =>
 
 // Manage Libraries dialog state
 const showManageLibraries = ref(false);
+const showFolderManager = ref(false);
 const showDesktopTitleBar = isWin || isLinux;
 
 /// Splitter for resizing the left pane
@@ -416,6 +425,13 @@ const libraryMenuItems = computed(() => {
     // icon: IconEdit,
     action: () => {
       showManageLibraries.value = true;
+    }
+  });
+  items.push({
+    label: "Folder Manager...",
+    icon: IconFolderCog,
+    action: () => {
+      showFolderManager.value = true;
     }
   });
   return items;
