@@ -99,15 +99,26 @@ pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
 
             let app_handle = _ctx.app_handle().clone();
             tauri::async_runtime::spawn(async move {
+                let has_auto_enhance = crate::t_enhance::is_file_auto_enhanced(file_id);
                 if let Some(data) = crate::t_thumb_cache::get(file_id) {
-                    responder.respond(image_response(data));
+                    let final_data = if has_auto_enhance {
+                        crate::t_enhance::apply_auto_enhance_to_bytes(&data).unwrap_or(data)
+                    } else {
+                        data
+                    };
+                    responder.respond(image_response(final_data));
                     return;
                 }
 
                 let response = match t_sqlite::AThumb::fetch_raw_for_library(file_id, &library_id) {
                     Ok(Some(data)) => {
                         let _ = crate::t_thumb_cache::put(file_id, &data);
-                        image_response(data)
+                        let final_data = if has_auto_enhance {
+                            crate::t_enhance::apply_auto_enhance_to_bytes(&data).unwrap_or(data)
+                        } else {
+                            data
+                        };
+                        image_response(final_data)
                     }
                     _ => {
                         if let Ok(Some(file)) = t_sqlite::AFile::get_file_info(file_id) {
@@ -158,15 +169,26 @@ pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
 
             let app_handle = _ctx.app_handle().clone();
             tauri::async_runtime::spawn(async move {
+                let has_auto_enhance = crate::t_enhance::is_file_auto_enhanced(file_id);
                 if let Some(data) = crate::t_thumb_cache::get(file_id) {
-                    responder.respond(image_response(data));
+                    let final_data = if has_auto_enhance {
+                        crate::t_enhance::apply_auto_enhance_to_bytes(&data).unwrap_or(data)
+                    } else {
+                        data
+                    };
+                    responder.respond(image_response(final_data));
                     return;
                 }
 
                 let response = match t_sqlite::AThumb::fetch_raw_for_library(file_id, &library_id) {
                     Ok(Some(data)) => {
                         let _ = crate::t_thumb_cache::put(file_id, &data);
-                        image_response(data)
+                        let final_data = if has_auto_enhance {
+                            crate::t_enhance::apply_auto_enhance_to_bytes(&data).unwrap_or(data)
+                        } else {
+                            data
+                        };
+                        image_response(final_data)
                     }
                     _ => {
                         if let Ok(Some(file)) = t_sqlite::AFile::get_file_info(file_id) {
@@ -233,6 +255,12 @@ pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
                 }
             };
 
+            let has_auto_enhance = file
+                .edits
+                .as_deref()
+                .map(crate::t_enhance::is_auto_enhance_active)
+                .unwrap_or(false);
+
             tauri::async_runtime::spawn(async move {
                 let response = match t_image::get_file_image_bytes_cached(
                     &file_path,
@@ -240,7 +268,14 @@ pub fn register_protocols(builder: Builder<Wry>) -> Builder<Wry> {
                 )
                 .await
                 {
-                    Ok(data) => image_response(data),
+                    Ok(data) => {
+                        let final_data = if has_auto_enhance {
+                            crate::t_enhance::apply_auto_enhance_to_bytes(&data).unwrap_or(data)
+                        } else {
+                            data
+                        };
+                        image_response(final_data)
+                    }
                     Err(_) => text_response(http::StatusCode::NOT_FOUND, "preview not found"),
                 };
                 responder.respond(response);

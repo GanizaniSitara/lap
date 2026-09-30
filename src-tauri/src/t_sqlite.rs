@@ -1574,6 +1574,7 @@ pub struct AFile {
     pub album_visible: bool, // output-only: visibility under this album's filters
     pub motion_photo_offset: Option<i64>,   // byte offset of embedded MP4 (Android Motion Photo)
     pub proxy_path: Option<String>,
+    pub edits: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -2683,6 +2684,7 @@ impl AFile {
             motion_photo_offset,
             album_visible: true,
             proxy_path: None,
+            edits: None,
         };
 
         Ok(file)
@@ -3224,7 +3226,8 @@ impl AFile {
                 END AS live_photo_video_path,
                 a.motion_photo_offset,
                 {} AS album_visible,
-                a.proxy_path
+                a.proxy_path,
+                a.edits
             FROM afiles a
             LEFT JOIN afolders b ON a.folder_id = b.id
             LEFT JOIN albums c ON b.album_id = c.id
@@ -3305,6 +3308,7 @@ impl AFile {
             motion_photo_offset: row.get(55)?,
             album_visible: row.get(56)?,
             proxy_path: row.get(57)?,
+            edits: row.get(58)?,
         })
     }
 
@@ -3932,6 +3936,7 @@ impl AFile {
             new_file_info.live_photo_video_id = old_file_info.live_photo_video_id;
         }
         new_file_info.proxy_path = old_file_info.proxy_path.clone();
+        new_file_info.edits = old_file_info.edits.clone();
         new_file_info.last_scan_time = Some(last_scan_time);
 
         // update the file info
@@ -9918,6 +9923,7 @@ fn create_db_internal() -> Result<(), String> {
             live_photo_video_id INTEGER,
             motion_photo_offset INTEGER,
             proxy_path TEXT,
+            edits TEXT,
             FOREIGN KEY (folder_id) REFERENCES afolders(id) ON DELETE CASCADE
         )",
         [],
@@ -9986,6 +9992,10 @@ fn create_db_internal() -> Result<(), String> {
     );
     let _ = conn.execute(
         "ALTER TABLE afiles ADD COLUMN proxy_path TEXT",
+        [],
+    );
+    let _ = conn.execute(
+        "ALTER TABLE afiles ADD COLUMN edits TEXT",
         [],
     );
 

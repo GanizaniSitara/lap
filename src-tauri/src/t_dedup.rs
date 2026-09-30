@@ -350,6 +350,7 @@ fn get_files_by_sizes(conn: &Connection) -> Result<Vec<AFile>, String> {
                 motion_photo_offset: None,
                 album_visible: true,
                 proxy_path: None,
+                edits: None,
             })
         })
         .map_err(|e| e.to_string())?;

@@ -21,6 +21,7 @@ mod t_common;
 mod t_config;
 mod t_dedup;
 mod t_embedded_jpeg;
+pub mod t_enhance;
 mod t_face;
 mod t_heif;
 mod t_http;
@@ -358,6 +359,7 @@ async fn main() {
             t_cmds::set_file_favorite,
             t_cmds::set_file_rating,
             t_cmds::set_file_culling_flag,
+            t_cmds::toggle_auto_enhance,
             t_cmds::batch_update_file_metadata,
             // tag
             t_cmds::get_tag_group_name,

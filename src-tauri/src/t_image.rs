@@ -30,6 +30,8 @@ use uuid::Uuid;
 use walkdir::WalkDir;
 
 use crate::{t_jxl, t_libraw, t_utils};
+#[allow(unused_imports)]
+pub use crate::t_enhance::apply_auto_enhance;
 
 #[derive(Default)]
 pub struct CaptureSettings {

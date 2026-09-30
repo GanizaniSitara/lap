@@ -79,3 +79,27 @@ pub fn get(file_id: i64) -> Option<Vec<u8>> {
     let val = table.get(file_id).ok()??;
     Some(val.value().to_vec())
 }
+
+pub fn remove(file_id: i64) -> Result<(), String> {
+    if file_id <= 0 {
+        return Ok(());
+    }
+    let db = get_db()?;
+    let write_mutex = WRITE_MUTEX.get_or_init(|| Mutex::new(()));
+    let _guard = write_mutex
+        .lock()
+        .map_err(|_| "Poisoned redb write lock".to_string())?;
+    let write_tx = db
+        .begin_write()
+        .map_err(|e| format!("Failed to begin write tx: {}", e))?;
+    {
+        let mut table = write_tx
+            .open_table(THUMBNAILS_TABLE)
+            .map_err(|e| format!("Failed to open thumbnails table: {}", e))?;
+        let _ = table.remove(file_id);
+    }
+    write_tx
+        .commit()
+        .map_err(|e| format!("Failed to commit write tx: {}", e))?;
+    Ok(())
+}

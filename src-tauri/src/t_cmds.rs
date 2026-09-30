@@ -2930,6 +2930,38 @@ pub fn set_file_culling_flag(file_id: i64, culling_flag: i32) -> Result<usize, S
         .map_err(|e| format!("Error while setting file culling flag: {}", e))
 }
 
+/// Toggle 'I'm Feeling Lucky' 1-Click Auto Enhance non-destructive edit.
+#[tauri::command]
+pub fn toggle_auto_enhance(file_id: i64, enable: bool) -> Result<(), String> {
+    if file_id <= 0 {
+        return Err("Invalid file_id".to_string());
+    }
+
+    let file = AFile::get_file_info(file_id)?
+        .ok_or_else(|| format!("File id {} not found", file_id))?;
+
+    let mut edits_val: serde_json::Value = match file.edits {
+        Some(ref s) if !s.trim().is_empty() => {
+            serde_json::from_str(s).unwrap_or_else(|_| serde_json::json!({}))
+        }
+        _ => serde_json::json!({}),
+    };
+
+    if let Some(obj) = edits_val.as_object_mut() {
+        obj.insert("auto_enhance".to_string(), serde_json::Value::Bool(enable));
+    }
+
+    let new_edits_str = serde_json::to_string(&edits_val).map_err(|e| e.to_string())?;
+
+    AFile::update_column(file_id, "edits", &new_edits_str)
+        .map_err(|e| format!("Error while updating edits: {}", e))?;
+
+    let _ = crate::t_thumb_cache::remove(file_id);
+    let _ = crate::t_xmp::sync_file_xmp(file_id);
+
+    Ok(())
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BatchFileMetadataUpdate {
