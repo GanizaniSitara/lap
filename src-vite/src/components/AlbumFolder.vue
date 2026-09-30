@@ -11,7 +11,7 @@
     <li v-for="child in visibleChildren"
       :key="child.id" 
       :id="'folder-' + child.id" 
-      :class="{ 'pl-4': child.path !== rootPath }"
+      :class="{ 'pl-2': child.path !== rootPath }"
     >
       <div v-if="child.id != 0 || selection.folderPath.value == rootPath"
         :data-file-drop-path="unavailable ? undefined : child.path"
@@ -25,7 +25,7 @@
       >
         <IconRight
           :class="[
-            'p-1 w-6 h-6 shrink-0 transition-transform',
+            'p-0.5 w-4 h-4 shrink-0 transition-transform',
             isFolderFiltering
               ? (shouldShowFilteredChildren(child) ? 'rotate-90 pointer-events-none' : 'opacity-0 pointer-events-none')
               : (child.has_subfolders && !child.is_excluded_from_search ? '' : 'opacity-0 pointer-events-none'),
@@ -33,14 +33,14 @@
           ]"
           @click.stop="!isFolderFiltering && expandFolder(child)"
         />
-        <component :is="child.is_excluded_from_search ? IconFolderOff : IconFolder" class="p-1 w-6 h-6 shrink-0" />
+        <component :is="child.is_excluded_from_search ? IconFolderOff : IconFolder" class="p-0.5 w-4 h-4 shrink-0 mr-1" />
 
         <!-- name -->
         <input v-if="isCreatingFolder && creatingFolderPath === child.path"
           :data-new-folder-path="child.path"
           type="text"
           maxlength="255"
-          class="input px-1 w-full text-base"
+          class="input input-xs px-1 w-full text-xs h-5"
           v-model="newFolderName"
           @click.stop
           @mousedown.stop
@@ -52,7 +52,7 @@
           ref="folderInputRef"
           type="text"
           maxlength="255"
-          class="input px-1 w-full text-base"
+          class="input input-xs px-1 w-full text-xs h-5"
           v-model="child.name"
           @click.stop
           @mousedown.stop
@@ -61,14 +61,14 @@
           @blur = "clickRenameFolder(child.name)"
         > 
         <template v-else>
-          <div class="overflow-hidden whitespace-pre text-ellipsis">
+          <div class="overflow-hidden whitespace-pre text-ellipsis text-xs">
             {{ child.name }}
           </div>
-          <div class="ml-auto flex flex-row items-center text-base-content/30">
-            <IconHeartFilled v-if="child.is_favorite" class="mr-1 w-4 h-4 shrink-0 text-primary/70" />
+          <div class="ml-auto flex flex-row items-center text-base-content/30 gap-0.5">
+            <IconHeartFilled v-if="child.is_favorite" class="mr-1 w-3.5 h-3.5 shrink-0 text-primary/70" />
             <span
               v-if="getFolderFileCount(child.path) > 0"
-              class="sidebar-item-count shrink-0"
+              class="sidebar-item-count text-[10px] shrink-0"
             >
               {{ getFolderFileCount(child.path).toLocaleString() }}
             </span>
@@ -242,7 +242,7 @@ const folderClass = (folder: Folder) => {
   const selected = isSelectedFolder(folder);
   const matched = isFolderFiltering.value && matchedFolderPaths.value.has(folder.path);
   return [
-    'p-1 h-8 flex items-center rounded-box whitespace-nowrap cursor-pointer group border-2',
+    'px-1 py-0.5 min-h-[24px] h-6 flex items-center rounded whitespace-nowrap cursor-pointer group border',
     selected
       ? 'text-primary! bg-base-100 hover:bg-base-100 border-transparent'
       : 'hover:text-base-content hover:bg-base-100/30 border-transparent',

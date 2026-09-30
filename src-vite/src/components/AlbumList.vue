@@ -14,10 +14,10 @@
       />
     </div>
 
-    <div v-if="isMainPane" class="mx-1 mb-2 px-1 shrink-0">
+    <div v-if="isMainPane" class="mx-1 mb-1 px-1 shrink-0">
       <div
         :class="[
-          'h-8 flex items-center rounded-box transition-colors bg-base-100/40',
+          'h-7 flex items-center rounded-box transition-colors bg-base-100/40',
           isFolderSearchFocused ? 'border-2 border-primary' : 'border border-base-content/10 hover:border-base-content/30',
           !isLoading && albums.length === 0 ? 'opacity-50' : '',
         ]"
@@ -92,7 +92,7 @@
             :data-file-drop-path="album.is_accessible === false ? undefined : album.path"
             :data-file-drop-album-id="album.is_accessible === false ? undefined : album.id"
             :class="[
-              'mx-1 p-1 h-12 flex items-center rounded-box whitespace-nowrap cursor-pointer group border-2 border-transparent transition-all duration-200 ease-in-out',
+              'mx-1 px-1 py-0.5 min-h-[28px] h-7 flex items-center rounded whitespace-nowrap cursor-pointer group border border-transparent transition-all duration-150 ease-in-out',
               selection.albumId.value === album.id
                 ? (selection.selected.value ? `${isMainSourceActive ? 'text-primary' : 'text-base-content/70 bg-base-100/30 hover:bg-base-100/70'} bg-base-100 hover:bg-base-100` : 'text-base-content hover:bg-base-100/30')
                 : 'hover:text-base-content hover:bg-base-100/30',
@@ -103,7 +103,7 @@
           >
             <IconDragHandle
               v-if="isReorderingAlbum(album)"
-              class="album-drag-handle p-1 w-6 h-6 shrink-0 cursor-move text-base-content/70 hover:text-base-content"
+              class="album-drag-handle p-0.5 w-4 h-4 shrink-0 cursor-move text-base-content/70 hover:text-base-content mr-0.5"
               :title="$t('menu.album.reorder')"
               @click.stop
               @dblclick.stop
@@ -111,7 +111,7 @@
             <IconRight
               v-else
               :class="[
-                'p-1 w-6 h-6 shrink-0 transition-transform hover:text-base-content',
+                'p-0.5 w-4 h-4 shrink-0 transition-transform hover:text-base-content mr-0.5',
                 isFolderFiltering
                   ? (shouldShowFilteredFolderTree(album.id) ? 'rotate-90 pointer-events-none' : 'opacity-0 pointer-events-none')
                   : (album.is_expanded ? 'rotate-90' : ''),
@@ -119,14 +119,14 @@
               @click.stop="!isFolderFiltering && toggleAlbumExpansion(album)"
               @dblclick.stop
             />
-            <div class="w-10 h-10 mr-2 rounded-box shrink-0 overflow-hidden border border-base-content/5 bg-base-content/5" @click.stop>
+            <div class="w-5 h-5 mr-1.5 rounded shrink-0 overflow-hidden border border-base-content/5 bg-base-content/5" @click.stop>
               <!-- Scanning / Paused / Queued -->
               <div v-if="isAlbumScanning(album.id)"
                 class="w-full h-full flex items-center justify-center cursor-pointer"
                 :title="$t('toolbar.tooltip.scanning')"
                 @click="toggleIndexAlbum(album.id)"
               >
-                <IconUpdate class="w-6 h-6 animate-spin" />
+                <IconUpdate class="w-4 h-4 animate-spin" />
               </div>
               <div v-else-if="isAlbumPaused(album.id) || (Number(album.indexed) > 0 && Number(album.indexed) < Number(album.total))"
                 class="w-full h-full flex items-center justify-center"
@@ -134,14 +134,14 @@
                 :title="$t('toolbar.tooltip.scan_paused')"
                 @click="toggleIndexAlbum(album.id)"
               >
-                <IconUpdateDot class="w-6 h-6" />
+                <IconUpdateDot class="w-4 h-4" />
               </div>
               <div v-else-if="getAlbumIcon(album) === 'update'"
                 class="w-full h-full flex items-center justify-center cursor-pointer hover:bg-base-100/30"
                 :title="$t('toolbar.tooltip.scan_queued')"
                 @click="toggleIndexAlbum(album.id)"
               >
-                <IconUpdate class="w-6 h-6" />
+                <IconUpdate class="w-4 h-4" />
               </div>
               <!-- Cover -->
               <img
@@ -156,25 +156,25 @@
                 class="w-full h-full flex items-center justify-center cursor-pointer"
                 @click="clickAlbum(album)"
               >
-                <IconFolders class="w-6 h-6" />
+                <IconFolders class="w-4 h-4" />
               </div>
             </div>
 
             <div class="flex flex-col overflow-hidden" :class="album.is_accessible === false ? 'opacity-50' : ''">
-              <div class="overflow-hidden whitespace-pre text-ellipsis">
+              <div class="overflow-hidden whitespace-pre text-ellipsis text-xs font-medium">
                 {{ album.name }}
               </div>
               <div
                 v-if="album.description"
-                class="text-xs overflow-hidden whitespace-nowrap text-ellipsis text-base-content/50"
+                class="text-[10px] overflow-hidden whitespace-nowrap text-ellipsis text-base-content/50 leading-tight"
               >{{ album.description }}</div>
             </div>
 
             <!-- Right side: Count and Status Icons -->
-            <div class="ml-auto flex flex-row items-center text-base-content/30">
+            <div class="ml-auto flex flex-row items-center text-base-content/30 gap-0.5">
               <span
                 v-if="props.showTotalCount !== false && getAlbumDisplayCount(album) > 0"
-                class="sidebar-item-count shrink-0"
+                class="sidebar-item-count text-[10px] shrink-0"
               >
                 {{ getAlbumDisplayCount(album).toLocaleString() }}
               </span>
@@ -199,7 +199,7 @@
           >
             <div
               v-if="isFolderFiltering ? shouldShowFilteredFolderTree(album.id) : album.is_expanded"
-              class="ml-6 mr-2 my-1 p-1 rounded-box bg-base-300/30 border border-base-content/5 shadow-sm"
+              class="ml-2 mr-1 my-0.5 p-0.5 rounded bg-base-300/20 border border-base-content/5 shadow-none"
             >
               <AlbumFolder
                 :children="isFolderFiltering ? getFilteredFolderTree(album.id) : album.children"

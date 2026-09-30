@@ -2,7 +2,7 @@
   "sidebar": {
     "home": "主页",
     "library": "资料库",
-    "album": "相册",
+    "album": "文件夹",
     "search": "搜索",
     "rating": "评分",
     "tag": "标签",
@@ -54,7 +54,7 @@
     "database_corrupted_hint": "请尝试切换到其他库。"
   },
   "album": {
-    "album_list": "相册",
+    "album_list": "文件夹",
     "search_folders": "搜索文件夹",
     "favorite_folders_only": "仅收藏文件夹",
     "no_folders_found": "未找到文件夹",
@@ -71,7 +71,7 @@
       "description": "文件夹可能已移动或删除。请刷新父文件夹。"
     },
     "edit": {
-      "title_add": "新建相册",
+      "title_add": "添加文件夹",
       "title": "编辑相册",
       "folder": "文件夹",
       "select_folder": "选择文件夹",
@@ -120,7 +120,7 @@
       "tab_exclusions": "排除项"
     },
     "no_albums": {
-      "title": "还没有相册",
+      "title": "还没有文件夹",
       "description": "添加包含照片或视频的文件夹以开始使用"
     },
     "no_smart_albums": {
@@ -251,7 +251,7 @@
     "error_failed": "导入失败：{message}"
   },
   "welcome": {
-    "add_album_title": "从新建相册开始",
+    "add_album_title": "从添加文件夹开始",
     "add_album_description": "选择一个文件夹，让 Lap 为您整理照片和视频。",
     "smart_album_title": "智能整理照片",
     "smart_album_description": "使用规则自动归类符合条件的照片。",
@@ -569,7 +569,7 @@
       "person": "人脸识别仍处于测试阶段，结果可能不准确。"
     },
     "not_found": {
-      "albums": "未找到相册",
+      "albums": "未找到文件夹",
       "files": "未找到文件",
       "image_search_failed": "图像搜索不可用",
       "image_search_failed_hint": "请检查图像搜索模型是否可用，然后重试。",
@@ -660,7 +660,7 @@
       "default": "默认库"
     },
     "album": {
-      "add": "新建相册",
+      "add": "添加文件夹",
       "edit": "编辑相册...",
       "scan": "扫描相册",
       "reorder": "重新排序",

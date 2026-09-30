@@ -2,7 +2,7 @@
   "sidebar": {
     "home": "Home",
     "library": "Library",
-    "album": "Albums",
+    "album": "Folders",
     "search": "Search",
     "rating": "Ratings",
     "tag": "Tags",
@@ -54,7 +54,7 @@
     "database_corrupted_hint": "Please try switching to another library."
   },
   "album": {
-    "album_list": "Albums",
+    "album_list": "Folders",
     "search_folders": "Search folders",
     "favorite_folders_only": "Favorite folders only",
     "no_folders_found": "No folders found",
@@ -71,7 +71,7 @@
       "description": "The folder may have been moved or deleted. Refresh its parent folder."
     },
     "edit": {
-      "title_add": "New album",
+      "title_add": "Add Folder",
       "title": "Edit album",
       "folder": "Folder",
       "select_folder": "Select a folder",
@@ -120,8 +120,8 @@
       "tab_exclusions": "Exclusions"
     },
     "no_albums": {
-      "title": "No albums added yet",
-      "description": "Add an album containing photos or videos to get started"
+      "title": "No folders added yet",
+      "description": "Add a folder containing photos or videos to get started"
     },
     "no_smart_albums": {
       "description": "Create smart albums from custom query rules."
@@ -251,7 +251,7 @@
     "error_failed": "Import failed: {message}"
   },
   "welcome": {
-    "add_album_title": "Start with a new album",
+    "add_album_title": "Start with a new folder",
     "add_album_description": "Select a folder and let Lap organize your photos and videos.",
     "smart_album_title": "Organize with smart albums",
     "smart_album_description": "Use rules to automatically group photos that match your criteria.",
@@ -569,7 +569,7 @@
       "person": "Face recognition is in beta and may be inaccurate."
     },
     "not_found": {
-      "albums": "No albums found",
+      "albums": "No folders found",
       "files": "No files found",
       "image_search_failed": "Image search unavailable",
       "image_search_failed_hint": "Check that the image search model is available, then try again.",
@@ -660,7 +660,7 @@
       "default": "Default library"
     },
     "album": {
-      "add": "New album",
+      "add": "Add Folder",
       "edit": "Edit album...",
       "scan": "Scan album",
       "reorder": "Reorder",
