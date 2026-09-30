@@ -32,27 +32,14 @@ By default:
 
 ## Network Access
 
-Lap may access the network in limited cases where the feature requires it. Based on the current implementation, this may include:
+Lap operates strictly offline for library processing and management. Limited network access may only occur when explicitly triggered:
 
-- Checking for application updates
-- Downloading application updates from GitHub releases when you choose to install an update
 - Opening external links such as the project website or GitHub repository in your browser
 - Fetching map tiles from OpenStreetMap tile servers when viewing a photo's GPS location on the map
 
-## Anonymous Usage Statistics
+## No Telemetry or Usage Statistics
 
-Lap includes Aptabase, a privacy-first analytics service, in its backend. It is enabled by default in release builds to help the maintainer understand basic adoption and stability.
-
-Aptabase runs only on the Rust backend. The frontend does not record or send any user behavior events — no clicks, no navigation tracking, no feature usage analytics.
-
-When enabled, Lap sends exactly two app-lifecycle events:
-
-- App started
-- App exited
-
-Each event carries only the Lap version, device platform, and operating system. No coarse region or IP-derived location is stored or surfaced by the analytics service.
-
-These events are strictly anonymous. They contain no user identifiers, session IDs, or device fingerprints. Aptabase does not use cookies or tracking pixels, and events are not correlated across sessions.
+Lap contains no telemetry, analytics, or tracking services. No call-home mechanisms, session tracking, crash reporters, or usage statistics exist in either the backend or frontend.
 
 **Lap does not and will never send** your photos, videos, folder paths, filenames, search queries, tags, ratings, comments, EXIF data, embeddings, face clusters, thumbnails, previews, database contents, or any other library data.
 
@@ -67,11 +54,7 @@ This local data is used to provide the app's functionality and improve performan
 
 ## Third-Party Services
 
-Lap does not provide its own cloud storage service.
-
-When you use update-related features, release assets may be fetched from GitHub. Those requests are subject to GitHub's terms and privacy practices.
-
-When anonymous analytics is enabled, event delivery is handled by Aptabase. Those requests are subject to Aptabase's terms and privacy practices.
+Lap does not provide or connect to any cloud storage or telemetry service.
 
 ## Changes to This Document
 

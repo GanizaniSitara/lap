@@ -51,7 +51,6 @@
     "active": true,
     "category": "Graphics and Design",
     "targets": "all",
-    "createUpdaterArtifacts": true,
     "icon": [
       "icons/icon.png",
       "icons/icon.ico",
@@ -60,14 +59,6 @@
     "resources": {
       "resources/models/*": "models",
       "resources/ffmpeg/*": "ffmpeg"
-    }
-  },
-  "plugins": {
-    "updater": {
-      "endpoints": [
-        "https://github.com/julyx10/lap/releases/latest/download/latest.json"
-      ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDUzMEQ0QzM2RTRDOUNEMjUKUldRbHpjbmtOa3dOVXlBYm0rYk9lY2FtVGpzWTJ2NkRqdUtSOEN4eUxwRlVTaUlVbkJ4aHhQS3gK"
     }
   }
 }

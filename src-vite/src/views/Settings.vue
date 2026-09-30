@@ -93,18 +93,7 @@
             </div>
           </div>
 
-          <!-- updates -->
-          <div class="rounded-box p-2 space-y-2 bg-base-300/30 border border-base-content/5 shadow-sm">
-            <div class="flex items-center gap-2 text-base-content/30">
-              <span class="font-bold uppercase text-[10px] tracking-widest">{{ $t('settings.general.section_updates') }}</span>
-            </div>
-            <div class="flex items-center justify-between p-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.general.auto_check_updates') }}</div>
-              </div>
-              <input type="checkbox" class="toggle toggle-primary toggle-sm" v-model="config.settings.autoCheckUpdates" />
-            </div>
-          </div>
+
 
         </div>
 
@@ -1461,9 +1450,7 @@ watch(() => config.settings.showToolTip, (newValue) => {
 watch(() => config.settings.showStatusBar, (newValue) => {
   emit('settings-showStatusBar-changed', newValue);
 });
-watch(() => config.settings.autoCheckUpdates, (newValue) => {
-  emit('settings-autoCheckUpdates-changed', newValue);
-});
+
 // watch(() => config.settings.showComment, (newValue) => {
 //   emit('settings-showComment-changed', newValue);
 // });
