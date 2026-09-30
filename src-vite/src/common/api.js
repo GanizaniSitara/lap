@@ -2128,6 +2128,17 @@ export async function deletePerson(personId) {
   return null;
 }
 
+// merge a person into another
+export async function mergePerson(targetId, sourceId) {
+  try {
+    const result = await invoke('merge_person', { targetId, sourceId });
+    return result;
+  } catch (error) {
+    console.error('Failed to merge person:', error);
+  }
+  return null;
+}
+
 // get faces for a file
 export async function getFacesForFile(fileId) {
   try {

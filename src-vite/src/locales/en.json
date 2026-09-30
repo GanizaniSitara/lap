@@ -722,7 +722,15 @@
       "index_faces": "Index faces",
       "reset_index": "Reset index",
       "unnamed": "Unnamed person",
-      "search": "Search people"
+      "search": "Search people",
+      "named_people": "Named People",
+      "unnamed_people": "Unnamed People",
+      "no_named_people": "No named people",
+      "no_unnamed_people": "No unnamed people",
+      "merge": "Merge into...",
+      "merge_title": "Merge Person",
+      "merge_desc": "Merge \"{name}\" into:",
+      "search_target": "Search target person..."
     },
     "tag": {
       "rename": "Rename",
@@ -782,6 +790,11 @@
       "title": "Delete person",
       "content": "Are you sure you want to delete '{person}'?",
       "ok": "Delete"
+    },
+    "merge_person": {
+      "title": "Merge People",
+      "content": "Are you sure you want to merge '{source}' into '{target}'? All photos will be moved to '{target}'.",
+      "ok": "Merge"
     },
     "drop_import": {
       "title": "Cannot import files",

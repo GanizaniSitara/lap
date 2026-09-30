@@ -79,67 +79,187 @@
       </div>
     </div>
 
-    <!-- Person List -->
+    <!-- Person List: Split into Named and Unnamed sections -->
     <div
       v-if="allPersons.length > 0"
       class="grow overflow-x-hidden overflow-y-auto"
       @scroll="handlePersonListScroll"
     >
-      <ul>
-        <li v-for="person in sortedPersons" :key="person.id" :id="'person-' + person.id">
-          <div
-            :class="[
-              'sidebar-item gap-2 group',
-              selectedPerson && selectedPerson.id === person.id && !isRenamingPerson ? 'sidebar-item-selected' : 'sidebar-item-hover',
-            ]"
-            @click="selectPerson(person)"
-            @contextmenu.prevent.stop="(e: MouseEvent) => handlePersonContextMenu(person, e)"
-          >
-            <!-- Face thumbnail -->
-            <div class="w-8 h-8 rounded-full overflow-hidden bg-base-300/70 ring-1 ring-base-content/5 shrink-0 flex items-center justify-center">
-              <img 
-                v-if="person.thumbnail" 
-                :src="'data:image/jpeg;base64,' + person.thumbnail" 
-                class="w-full h-full object-cover"
-              />
-              <IconPerson v-else class="w-5 h-5 text-base-content/30" />
-            </div>
-            
-            <!-- Name input or display -->
-            <input v-if="selectedPerson && selectedPerson.id === person.id && isRenamingPerson"
-              ref="personInputRef"
-              type="text"
-              maxlength="255"
-              class="input px-1 flex-1 focus:border text-base"
-              v-model="person.name"
-              @keydown.enter="handleRenamePerson"
-              @keydown.esc="cancelRenamePerson"
-              @blur="handleRenamePerson"
+      <!-- Named People Section -->
+      <div class="mb-2">
+        <div
+          class="px-2 py-1.5 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-base-content/60 select-none cursor-pointer hover:text-base-content"
+          @click="isNamedSectionCollapsed = !isNamedSectionCollapsed"
+        >
+          <div class="flex items-center gap-1.5 min-w-0">
+            <IconRight
+              class="w-3.5 h-3.5 shrink-0 transition-transform"
+              :class="{ 'rotate-90': !isNamedSectionCollapsed }"
             />
-            <template v-else>
-              <span class="sidebar-item-label">
-                {{ getPersonDisplayName(person) }}
-              </span>
-              <div class="ml-auto flex flex-row items-center text-base-content/30">
-                <span v-if="person.count" class="sidebar-item-count shrink-0">
-                  {{ person.count.toLocaleString() }}
-                </span>
-                <div :class="[
-                    selectedPerson?.id === person.id ? '' : 'hidden group-hover:flex'
-                  ]"
-                >
-                  <ContextMenu
-                    :ref="(el: any) => { if (el) personContextMenus[person.id] = el }"
-                    :iconMenu="IconMore"
-                    :menuItems="getMoreMenuItems()"
-                    :smallIcon="true"
-                  />
-                </div>
-              </div>
-            </template>
+            <span class="truncate">{{ $t('menu.person.named_people') || 'Named People' }}</span>
           </div>
-        </li>
-      </ul>
+          <span class="text-[11px] tabular-nums font-normal opacity-70">
+            {{ namedPersons.length.toLocaleString() }}
+          </span>
+        </div>
+
+        <ul v-show="!isNamedSectionCollapsed">
+          <li
+            v-for="person in namedPersons"
+            :key="person.id"
+            :id="'person-' + person.id"
+          >
+            <div
+              :class="[
+                'sidebar-item gap-2 group transition-all',
+                selectedPerson && selectedPerson.id === person.id && !isRenamingPerson ? 'sidebar-item-selected' : 'sidebar-item-hover',
+                dropTargetPersonId === person.id ? 'ring-2 ring-primary bg-primary/20' : '',
+              ]"
+              draggable="true"
+              @dragstart="onDragStartPerson(person, $event)"
+              @dragover.prevent="onDragOverPerson(person, $event)"
+              @dragleave="onDragLeavePerson(person, $event)"
+              @drop.prevent.stop="onDropPerson(person, $event)"
+              @click="selectPerson(person)"
+              @contextmenu.prevent.stop="(e: MouseEvent) => handlePersonContextMenu(person, e)"
+            >
+              <!-- Face thumbnail -->
+              <div class="w-8 h-8 rounded-full overflow-hidden bg-base-300/70 ring-1 ring-base-content/5 shrink-0 flex items-center justify-center">
+                <img 
+                  v-if="person.thumbnail" 
+                  :src="'data:image/jpeg;base64,' + person.thumbnail" 
+                  class="w-full h-full object-cover pointer-events-none"
+                />
+                <IconPerson v-else class="w-5 h-5 text-base-content/30" />
+              </div>
+              
+              <!-- Name input or display -->
+              <input v-if="selectedPerson && selectedPerson.id === person.id && isRenamingPerson"
+                ref="personInputRef"
+                type="text"
+                maxlength="255"
+                class="input px-1 flex-1 focus:border text-base"
+                v-model="person.name"
+                @keydown.enter="handleRenamePerson"
+                @keydown.esc="cancelRenamePerson"
+                @blur="handleRenamePerson"
+              />
+              <template v-else>
+                <span class="sidebar-item-label">
+                  {{ getPersonDisplayName(person) }}
+                </span>
+                <div class="ml-auto flex flex-row items-center text-base-content/30">
+                  <span v-if="person.count" class="sidebar-item-count shrink-0">
+                    {{ person.count.toLocaleString() }}
+                  </span>
+                  <div :class="[
+                      selectedPerson?.id === person.id ? '' : 'hidden group-hover:flex'
+                    ]"
+                  >
+                    <ContextMenu
+                      :ref="(el: any) => { if (el) personContextMenus[person.id] = el }"
+                      :iconMenu="IconMore"
+                      :menuItems="getMoreMenuItems(person)"
+                      :smallIcon="true"
+                    />
+                  </div>
+                </div>
+              </template>
+            </div>
+          </li>
+          <li v-if="namedPersons.length === 0" class="px-4 py-2 text-xs text-base-content/40 italic">
+            {{ $t('menu.person.no_named_people') || 'No named people' }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- Unnamed People Section -->
+      <div class="mb-2">
+        <div
+          class="px-2 py-1.5 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-base-content/60 select-none cursor-pointer hover:text-base-content"
+          @click="isUnnamedSectionCollapsed = !isUnnamedSectionCollapsed"
+        >
+          <div class="flex items-center gap-1.5 min-w-0">
+            <IconRight
+              class="w-3.5 h-3.5 shrink-0 transition-transform"
+              :class="{ 'rotate-90': !isUnnamedSectionCollapsed }"
+            />
+            <span class="truncate">{{ $t('menu.person.unnamed_people') || 'Unnamed People' }}</span>
+          </div>
+          <span class="text-[11px] tabular-nums font-normal opacity-70">
+            {{ unnamedPersons.length.toLocaleString() }}
+          </span>
+        </div>
+
+        <ul v-show="!isUnnamedSectionCollapsed">
+          <li
+            v-for="person in unnamedPersons"
+            :key="person.id"
+            :id="'person-' + person.id"
+          >
+            <div
+              :class="[
+                'sidebar-item gap-2 group transition-all',
+                selectedPerson && selectedPerson.id === person.id && !isRenamingPerson ? 'sidebar-item-selected' : 'sidebar-item-hover',
+                dropTargetPersonId === person.id ? 'ring-2 ring-primary bg-primary/20' : '',
+              ]"
+              draggable="true"
+              @dragstart="onDragStartPerson(person, $event)"
+              @dragover.prevent="onDragOverPerson(person, $event)"
+              @dragleave="onDragLeavePerson(person, $event)"
+              @drop.prevent.stop="onDropPerson(person, $event)"
+              @click="selectPerson(person)"
+              @contextmenu.prevent.stop="(e: MouseEvent) => handlePersonContextMenu(person, e)"
+            >
+              <!-- Face thumbnail -->
+              <div class="w-8 h-8 rounded-full overflow-hidden bg-base-300/70 ring-1 ring-base-content/5 shrink-0 flex items-center justify-center">
+                <img 
+                  v-if="person.thumbnail" 
+                  :src="'data:image/jpeg;base64,' + person.thumbnail" 
+                  class="w-full h-full object-cover pointer-events-none"
+                />
+                <IconPerson v-else class="w-5 h-5 text-base-content/30" />
+              </div>
+              
+              <!-- Name input or display -->
+              <input v-if="selectedPerson && selectedPerson.id === person.id && isRenamingPerson"
+                ref="personInputRef"
+                type="text"
+                maxlength="255"
+                class="input px-1 flex-1 focus:border text-base"
+                v-model="person.name"
+                @keydown.enter="handleRenamePerson"
+                @keydown.esc="cancelRenamePerson"
+                @blur="handleRenamePerson"
+              />
+              <template v-else>
+                <span class="sidebar-item-label">
+                  {{ getPersonDisplayName(person) }}
+                </span>
+                <div class="ml-auto flex flex-row items-center text-base-content/30">
+                  <span v-if="person.count" class="sidebar-item-count shrink-0">
+                    {{ person.count.toLocaleString() }}
+                  </span>
+                  <div :class="[
+                      selectedPerson?.id === person.id ? '' : 'hidden group-hover:flex'
+                    ]"
+                  >
+                    <ContextMenu
+                      :ref="(el: any) => { if (el) personContextMenus[person.id] = el }"
+                      :iconMenu="IconMore"
+                      :menuItems="getMoreMenuItems(person)"
+                      :smallIcon="true"
+                    />
+                  </div>
+                </div>
+              </template>
+            </div>
+          </li>
+          <li v-if="unnamedPersons.length === 0" class="px-4 py-2 text-xs text-base-content/40 italic">
+            {{ $t('menu.person.no_unnamed_people') || 'No unnamed people' }}
+          </li>
+        </ul>
+      </div>
     </div>
 
     <div v-else-if="isLoadingPersons" class="mt-2 px-2 flex flex-col items-center justify-center text-base-content/30">
@@ -189,6 +309,89 @@
     @cancel="showResetFacesMsgbox = false"
   />
 
+  <!-- Merge person confirmation -->
+  <MessageBox
+    v-if="showMergeConfirmMsgbox"
+    :title="$t('menu.person.merge_title') || 'Merge People'"
+    :message="mergeConfirmMessage"
+    :OkText="$t('menu.person.merge') || 'Merge'"
+    :cancelText="$t('msgbox.cancel') || 'Cancel'"
+    :warningOk="false"
+    @ok="confirmMerge"
+    @cancel="cancelMergeConfirm"
+  />
+
+  <!-- Merge Person Modal Dialog -->
+  <ModalDialog
+    v-if="showMergeDialog"
+    :title="$t('menu.person.merge_title') || 'Merge Person'"
+    :width="360"
+    @cancel="showMergeDialog = false"
+  >
+    <div class="flex flex-col gap-3 min-h-0">
+      <div class="text-xs text-base-content/70">
+        {{ $t('menu.person.merge_desc', { name: getPersonDisplayName(mergeSourcePerson) }) || `Merge '${getPersonDisplayName(mergeSourcePerson)}' into:` }}
+      </div>
+
+      <div class="h-8 flex items-center rounded-box border border-base-content/20 bg-base-100/40 px-2">
+        <IconSearch class="w-4 h-4 text-base-content/30 mr-1.5 shrink-0" />
+        <input
+          v-model="mergeSearchText"
+          type="text"
+          :placeholder="$t('menu.person.search_target') || 'Search target person...'"
+          class="w-full bg-transparent border-none focus:ring-0 text-xs focus:outline-none placeholder-base-content/30"
+        />
+        <button
+          v-if="mergeSearchText"
+          type="button"
+          class="p-0.5 text-base-content/30 hover:text-base-content/70 cursor-pointer"
+          @click="mergeSearchText = ''"
+        >
+          <IconClose class="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      <div class="max-h-60 overflow-y-auto border border-base-content/10 rounded-box p-1 space-y-0.5">
+        <div
+          v-for="candidate in mergeCandidates"
+          :key="candidate.id"
+          :class="[
+            'flex items-center gap-2 px-2 py-1.5 rounded-box cursor-pointer select-none text-xs transition-colors',
+            selectedMergeTargetId === candidate.id ? 'bg-primary text-primary-content' : 'hover:bg-base-content/10',
+          ]"
+          @click="selectedMergeTargetId = candidate.id"
+        >
+          <div class="w-6 h-6 rounded-full overflow-hidden bg-base-300/70 shrink-0 flex items-center justify-center">
+            <img 
+              v-if="candidate.thumbnail" 
+              :src="'data:image/jpeg;base64,' + candidate.thumbnail" 
+              class="w-full h-full object-cover pointer-events-none"
+            />
+            <IconPerson v-else class="w-4 h-4 opacity-50" />
+          </div>
+          <span class="flex-1 truncate font-medium">{{ getPersonDisplayName(candidate) }}</span>
+          <span v-if="candidate.count" class="text-[10px] opacity-70">{{ candidate.count }}</span>
+        </div>
+        <div v-if="mergeCandidates.length === 0" class="text-center py-4 text-xs text-base-content/40 italic">
+          {{ $t('tooltip.not_found.person') || 'No people found' }}
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 mt-2">
+        <button class="btn btn-sm btn-ghost" @click="showMergeDialog = false">
+          {{ $t('msgbox.cancel') || 'Cancel' }}
+        </button>
+        <button
+          class="btn btn-sm btn-primary"
+          :disabled="!selectedMergeTargetId"
+          @click="confirmModalMerge"
+        >
+          {{ $t('menu.person.merge') || 'Merge' }}
+        </button>
+      </div>
+    </div>
+  </ModalDialog>
+
   <teleport to="body">
     <transition name="fade">
       <div
@@ -206,6 +409,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { invoke } from '@tauri-apps/api/core';
 import { config, libConfig } from '@/common/config';
 import { getPersonsPage, renamePerson, deletePerson, indexFaces, cancelFaceIndex, isFaceIndexing, listenFaceIndexProgress, listenFaceIndexFinished, listenClusterProgress, resetFaces, getFaceStats } from '@/common/api';
 import { SIDEBAR } from '@/common/constants';
@@ -217,10 +421,13 @@ import {
   IconUpdate,
   IconClose,
   IconSearch,
+  IconRight,
+  IconGroup,
 } from '@/common/icons';
 
 import ContextMenu from '@/components/ContextMenu.vue';
 import MessageBox from '@/components/MessageBox.vue';
+import ModalDialog from '@/components/ModalDialog.vue';
 
 const props = defineProps({
   titlebar: {
@@ -282,6 +489,159 @@ let unlistenCluster: (() => void) | null = null;
 
 const sortedPersons = computed(() => allPersons.value);
 
+// Conceptual sections: Named People vs Unnamed People
+const isNamedSectionCollapsed = ref(false);
+const isUnnamedSectionCollapsed = ref(false);
+
+const isNamedPerson = (person: any): boolean => {
+  if (!person || !person.name) return false;
+  return !person.name.trim().startsWith('Person ');
+};
+
+const namedPersons = computed(() => {
+  return sortedPersons.value.filter(p => isNamedPerson(p));
+});
+
+const unnamedPersons = computed(() => {
+  return sortedPersons.value.filter(p => !isNamedPerson(p));
+});
+
+// Drag and drop merging
+const draggedPerson = ref<any>(null);
+const dropTargetPersonId = ref<number | null>(null);
+
+function onDragStartPerson(person: any, event: DragEvent) {
+  if (isRenamingPerson.value) return;
+  draggedPerson.value = person;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', String(person.id));
+  }
+}
+
+function onDragOverPerson(targetPerson: any, event: DragEvent) {
+  if (!draggedPerson.value || draggedPerson.value.id === targetPerson.id) return;
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move';
+  }
+  dropTargetPersonId.value = targetPerson.id;
+}
+
+function onDragLeavePerson(targetPerson: any, event: DragEvent) {
+  if (dropTargetPersonId.value === targetPerson.id) {
+    dropTargetPersonId.value = null;
+  }
+}
+
+function onDropPerson(targetPerson: any, event: DragEvent) {
+  event.preventDefault();
+  dropTargetPersonId.value = null;
+  if (!draggedPerson.value || draggedPerson.value.id === targetPerson.id) {
+    draggedPerson.value = null;
+    return;
+  }
+
+  const source = draggedPerson.value;
+  draggedPerson.value = null;
+
+  pendingMergeSource.value = source;
+  pendingMergeTarget.value = targetPerson;
+  showMergeConfirmMsgbox.value = true;
+}
+
+// Merge dialog & confirmation
+const showMergeConfirmMsgbox = ref(false);
+const pendingMergeSource = ref<any>(null);
+const pendingMergeTarget = ref<any>(null);
+
+const showMergeDialog = ref(false);
+const mergeSourcePerson = ref<any>(null);
+const selectedMergeTargetId = ref<number | null>(null);
+const mergeSearchText = ref('');
+
+function openMergeDialog(person: any) {
+  mergeSourcePerson.value = person;
+  selectedMergeTargetId.value = null;
+  mergeSearchText.value = '';
+  showMergeDialog.value = true;
+}
+
+const mergeCandidates = computed(() => {
+  if (!mergeSourcePerson.value) return [];
+  const srcId = mergeSourcePerson.value.id;
+  const q = mergeSearchText.value.trim().toLowerCase();
+  return allPersons.value.filter(p => {
+    if (p.id === srcId) return false;
+    if (!q) return true;
+    const name = (p.name || '').toLowerCase();
+    return name.includes(q);
+  });
+});
+
+function confirmModalMerge() {
+  if (!selectedMergeTargetId.value || !mergeSourcePerson.value) return;
+  const target = allPersons.value.find(p => p.id === selectedMergeTargetId.value);
+  if (!target) return;
+
+  pendingMergeSource.value = mergeSourcePerson.value;
+  pendingMergeTarget.value = target;
+  showMergeDialog.value = false;
+  showMergeConfirmMsgbox.value = true;
+}
+
+const mergeConfirmMessage = computed(() => {
+  const srcName = getPersonDisplayName(pendingMergeSource.value);
+  const tgtName = getPersonDisplayName(pendingMergeTarget.value);
+  const template = localeMsg.value.msgbox?.merge_person?.content;
+  if (template) {
+    return template.replace('{source}', srcName).replace('{target}', tgtName);
+  }
+  return `Are you sure you want to merge '${srcName}' into '${tgtName}'? All photos will be moved to '${tgtName}'.`;
+});
+
+function cancelMergeConfirm() {
+  showMergeConfirmMsgbox.value = false;
+  pendingMergeSource.value = null;
+  pendingMergeTarget.value = null;
+}
+
+async function confirmMerge() {
+  showMergeConfirmMsgbox.value = false;
+  if (pendingMergeTarget.value && pendingMergeSource.value) {
+    await executeMerge(pendingMergeTarget.value.id, pendingMergeSource.value.id);
+  }
+  pendingMergeTarget.value = null;
+  pendingMergeSource.value = null;
+}
+
+async function executeMerge(targetId: number, sourceId: number) {
+  try {
+    // Calling Rust IPC command invoke('merge_person', { targetId, sourceId })
+    await invoke('merge_person', { targetId, sourceId });
+
+    if (selectedPerson.value?.id === sourceId) {
+      const target = allPersons.value.find(p => p.id === targetId);
+      if (target) {
+        selectPerson(target);
+      } else {
+        selectedPerson.value = null;
+        if (libConfig.person) {
+          libConfig.person.id = targetId;
+        }
+      }
+    }
+
+    await loadPersons();
+
+    if (libConfig.person?.id === targetId) {
+      emit('editDataChanged');
+    }
+  } catch (error) {
+    console.error('Failed to merge person:', error);
+  }
+}
+
 // Computed property to format cluster progress text using i18n
 const { t } = useI18n();
 const getPersonDisplayName = (person: any) => person?.name || t('menu.person.unnamed');
@@ -324,13 +684,14 @@ const showDeletePersonMsgbox = ref(false);
 const showResetFacesMsgbox = ref(false);
 
 // more menuitems
-const getMoreMenuItems = () => [
+const getMoreMenuItems = (person: any) => [
   {
     label: localeMsg.value.menu?.person?.rename || 'Rename',
     icon: IconRename,
     action: () => {
+      selectPerson(person);
       isRenamingPerson.value = true;
-      originalPersonName.value = selectedPerson.value?.name || '';
+      originalPersonName.value = person.name || '';
       nextTick(() => {
         if (personInputRef.value && personInputRef.value[0]) {
           personInputRef.value[0].focus();
@@ -338,11 +699,19 @@ const getMoreMenuItems = () => [
       });
     }
   },
+  {
+    label: localeMsg.value.menu?.person?.merge || 'Merge into...',
+    icon: IconGroup,
+    action: () => {
+      openMergeDialog(person);
+    }
+  },
   { label: "-", action: null },
   {
     label: localeMsg.value.menu?.person?.delete || 'Delete',
     icon: IconTrash,
     action: () => {
+      selectPerson(person);
       showDeletePersonMsgbox.value = true;
     },
   },
@@ -481,15 +850,28 @@ function selectPerson(person: any) {
 }
 
 async function handleRenamePerson() {
-  if (!isRenamingPerson.value) return;
+  if (!isRenamingPerson.value || !selectedPerson.value) return;
 
-  const newName = selectedPerson.value?.name?.trim() || '';
+  const newName = selectedPerson.value.name?.trim() || '';
 
   if (newName.length === 0 || newName === originalPersonName.value) {
     isRenamingPerson.value = false;
-    if (selectedPerson.value) {
-      selectedPerson.value.name = originalPersonName.value;
-    }
+    selectedPerson.value.name = originalPersonName.value;
+    return;
+  }
+
+  // Check if a person with this new name already exists (case-insensitive)
+  const existingPerson = allPersons.value.find(
+    p => p.id !== selectedPerson.value.id && p.name && p.name.trim().toLowerCase() === newName.toLowerCase()
+  );
+
+  if (existingPerson) {
+    // Prompt to merge
+    pendingMergeSource.value = selectedPerson.value;
+    pendingMergeTarget.value = existingPerson;
+    showMergeConfirmMsgbox.value = true;
+    isRenamingPerson.value = false;
+    selectedPerson.value.name = originalPersonName.value;
     return;
   }
 

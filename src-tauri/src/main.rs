@@ -42,6 +42,8 @@ mod t_storage;
 mod t_utils;
 mod t_video;
 
+pub use t_cmds::merge_person;
+
 /// The main function is the entry point for the Tauri application.
 #[tokio::main]
 async fn main() {
@@ -414,6 +416,7 @@ async fn main() {
             t_cmds::get_persons_page,
             t_cmds::rename_person,
             t_cmds::delete_person,
+            t_cmds::merge_person,
             t_cmds::get_faces_for_file,
             t_cmds::get_person_thumbnail,
             // dedup

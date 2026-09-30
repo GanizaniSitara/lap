@@ -3337,6 +3337,12 @@ pub fn delete_person(person_id: i64) -> Result<usize, String> {
     Person::delete(person_id).map_err(|e| format!("Error while deleting person: {}", e))
 }
 
+/// merge a person into another
+#[tauri::command]
+pub fn merge_person(target_id: i64, source_id: i64) -> Result<(), String> {
+    Person::merge(target_id, source_id)
+}
+
 /// get faces for a file
 #[tauri::command]
 pub fn get_faces_for_file(file_id: i64) -> Result<Vec<t_sqlite::Face>, String> {
