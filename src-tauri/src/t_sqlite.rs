@@ -8838,16 +8838,45 @@ impl Person {
         Ok(())
     }
 
-    /// Rename a person
+    /// Rename a person (and anchor them so they survive re-clustering)
     pub fn rename(person_id: i64, new_name: &str) -> Result<usize, String> {
         let conn = open_conn()?;
         let result = conn
             .execute(
-                "UPDATE persons SET name = ?1 WHERE id = ?2",
+                "UPDATE persons SET name = ?1, is_anchored = 1 WHERE id = ?2",
                 params![new_name, person_id],
             )
             .map_err(|e| e.to_string())?;
         Ok(result)
+    }
+
+    /// Merge a source person into a target person
+    #[allow(dead_code)]
+    pub fn merge(target_id: i64, source_id: i64) -> Result<(), String> {
+        if target_id == source_id {
+            return Ok(());
+        }
+
+        let mut conn = open_conn()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+
+        tx.execute(
+            "UPDATE faces SET person_id = ?1 WHERE person_id = ?2",
+            params![target_id, source_id],
+        )
+        .map_err(|e| e.to_string())?;
+
+        tx.execute(
+            "DELETE FROM persons WHERE id = ?1",
+            params![source_id],
+        )
+        .map_err(|e| e.to_string())?;
+
+        tx.commit().map_err(|e| e.to_string())?;
+
+        Self::update_thumbnail(target_id)?;
+
+        Ok(())
     }
 
     /// Delete a person (faces will have person_id set to NULL)
@@ -9004,11 +9033,12 @@ impl Face {
     }
 
     /// Get slim face data for clustering: (face_id, file_id, embedding_bytes)
+    /// Only returns faces where person_id IS NULL (so anchored faces are excluded from Chinese Whispers)
     /// Avoids loading full Face structs (bbox JSON, person_id, created_at) to reduce memory
     pub fn get_all_for_clustering() -> Result<Vec<(i64, i64, Option<Vec<u8>>)>, String> {
         let conn = open_conn()?;
         let mut stmt = conn
-            .prepare("SELECT id, file_id, embedding FROM faces")
+            .prepare("SELECT id, file_id, embedding FROM faces WHERE person_id IS NULL")
             .map_err(|e| e.to_string())?;
 
         let faces = stmt
@@ -9025,17 +9055,23 @@ impl Face {
         Ok(faces)
     }
 
-    /// Reset all face assignments and delete all persons (for re-clustering)
+    /// Reset face assignments and delete persons for unanchored persons (for re-clustering)
     pub fn reset_all_assignments() -> Result<(), String> {
         let conn = open_conn()?;
 
-        // Clear all person_id from faces
-        conn.execute("UPDATE faces SET person_id = NULL", [])
-            .map_err(|e| e.to_string())?;
+        // Clear person_id only on faces belonging to unanchored persons
+        conn.execute(
+            "UPDATE faces SET person_id = NULL WHERE person_id IN (SELECT id FROM persons WHERE is_anchored = 0 OR is_anchored IS NULL)",
+            [],
+        )
+        .map_err(|e| e.to_string())?;
 
-        // Delete all persons
-        conn.execute("DELETE FROM persons", [])
-            .map_err(|e| e.to_string())?;
+        // Delete only unanchored persons
+        conn.execute(
+            "DELETE FROM persons WHERE is_anchored = 0 OR is_anchored IS NULL",
+            [],
+        )
+        .map_err(|e| e.to_string())?;
 
         Ok(())
     }
@@ -10005,6 +10041,7 @@ fn create_db_internal() -> Result<(), String> {
             name TEXT,
             cover_face_id INTEGER,
             thumbnail BLOB,
+            is_anchored BOOLEAN DEFAULT 0,
             created_at INTEGER
         )",
         [],
@@ -10013,6 +10050,8 @@ fn create_db_internal() -> Result<(), String> {
 
     // Migration: add thumbnail column if not exists (for existing databases)
     let _ = conn.execute("ALTER TABLE persons ADD COLUMN thumbnail BLOB", []);
+    // Migration: add is_anchored column if not exists (for existing databases)
+    let _ = conn.execute("ALTER TABLE persons ADD COLUMN is_anchored BOOLEAN DEFAULT 0", []);
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_persons_name ON persons(name)",
         [],
