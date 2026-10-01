@@ -134,9 +134,20 @@ fn search_db(query: &str) {
 }
 
 fn run_ocr(path: &str) {
-    let res = json!({
-        "status": "not_implemented",
-        "message": format!("OCR pipeline execution headlessly is mocked. File path: {}", path)
-    });
-    println!("{}", res.to_string());
+    match lap_casa::t_advanced_ai::run_ocr_pipeline(path, None) {
+        Ok(text) => {
+            let res = json!({
+                "status": "success",
+                "text": text
+            });
+            println!("{}", res.to_string());
+        }
+        Err(e) => {
+            let res = json!({
+                "status": "error",
+                "message": e
+            });
+            println!("{}", res.to_string());
+        }
+    }
 }
