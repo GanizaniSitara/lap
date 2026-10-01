@@ -133,9 +133,9 @@ pub fn run_ocr_pipeline(image_path: &str, models_dir_opt: Option<std::path::Path
         let r = (pixel[0] as f32 / 255.0 - 0.485) / 0.229;
         let g = (pixel[1] as f32 / 255.0 - 0.456) / 0.224;
         let b = (pixel[2] as f32 / 255.0 - 0.406) / 0.225;
-        det_tensor[[0, 0, y as usize, x as usize]] = r;
+        det_tensor[[0, 0, y as usize, x as usize]] = b;
         det_tensor[[0, 1, y as usize, x as usize]] = g;
-        det_tensor[[0, 2, y as usize, x as usize]] = b;
+        det_tensor[[0, 2, y as usize, x as usize]] = r;
     }
 
     let det_value = ort::value::Value::from_array(det_tensor).map_err(|e| e.to_string())?;
@@ -215,16 +215,18 @@ pub fn run_ocr_pipeline(image_path: &str, models_dir_opt: Option<std::path::Path
 
         let crop = img.crop_imm(orig_min_x, orig_min_y, crop_w, crop_h);
         
-        let resized_crop = crop.resize_exact(320, 48, image::imageops::FilterType::Triangle).to_rgb8();
+        let mut rec_w = (48.0 * (crop_w as f32 / crop_h as f32)) as u32;
+        rec_w = rec_w.max(1);
+        let resized_crop = crop.resize_exact(rec_w, 48, image::imageops::FilterType::Triangle).to_rgb8();
         
-        let mut rec_tensor = Array4::<f32>::zeros((1, 3, 48, 320));
+        let mut rec_tensor = Array4::<f32>::zeros((1, 3, 48, rec_w as usize));
         for (x, y, pixel) in resized_crop.enumerate_pixels() {
             let r = (pixel[0] as f32 / 255.0 - 0.5) / 0.5;
             let g = (pixel[1] as f32 / 255.0 - 0.5) / 0.5;
             let b = (pixel[2] as f32 / 255.0 - 0.5) / 0.5;
-            rec_tensor[[0, 0, y as usize, x as usize]] = r;
+            rec_tensor[[0, 0, y as usize, x as usize]] = b;
             rec_tensor[[0, 1, y as usize, x as usize]] = g;
-            rec_tensor[[0, 2, y as usize, x as usize]] = b;
+            rec_tensor[[0, 2, y as usize, x as usize]] = r;
         }
 
         let rec_value = match ort::value::Value::from_array(rec_tensor) {
@@ -265,6 +267,7 @@ pub fn run_ocr_pipeline(image_path: &str, models_dir_opt: Option<std::path::Path
             }
             last_idx = max_idx;
         }
+        println!("Decoded box: {}", text);
         if !text.is_empty() {
             extracted_texts.push(text);
         }
