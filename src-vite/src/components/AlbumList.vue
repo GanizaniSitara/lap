@@ -28,7 +28,7 @@
           type="text"
           :disabled="!isLoading && albums.length === 0"
           :placeholder="$t('album.search_folders')"
-          class="w-full min-w-0 bg-transparent border-none focus:ring-0 px-2 text-sm placeholder-base-content/30 focus:outline-none disabled:opacity-50"
+          class="w-full min-w-0 bg-transparent border-none focus:ring-0 px-2 placeholder-base-content/30 focus:outline-none disabled:opacity-50"
           @focus="isFolderSearchFocused = true"
           @blur="isFolderSearchFocused = false"
           @keydown.esc.stop="folderSearch = ''"
@@ -92,7 +92,7 @@
             :data-file-drop-path="album.is_accessible === false ? undefined : album.path"
             :data-file-drop-album-id="album.is_accessible === false ? undefined : album.id"
             :class="[
-              'mr-0.5 pr-0.5 py-0.5 min-h-[28px] h-7 flex items-center rounded whitespace-nowrap cursor-pointer group border border-transparent transition-all duration-150 ease-in-out',
+              'pr-0.5 h-[1.85rem] flex items-center whitespace-nowrap cursor-pointer group border border-transparent',
               selection.albumId.value === album.id
                 ? (selection.selected.value ? `${isMainSourceActive ? 'text-primary' : 'text-base-content/70 bg-base-100/30 hover:bg-base-100/70'} bg-base-100 hover:bg-base-100` : 'text-base-content hover:bg-base-100/30')
                 : 'hover:text-base-content hover:bg-base-100/30',
@@ -161,20 +161,16 @@
             </div>
 
             <div class="flex flex-col overflow-hidden" :class="album.is_accessible === false ? 'opacity-50' : ''">
-              <div class="overflow-hidden whitespace-pre text-ellipsis text-xs font-medium">
+              <div class="overflow-hidden whitespace-pre text-ellipsis">
                 {{ album.name }}
               </div>
-              <div
-                v-if="album.description"
-                class="text-[10px] overflow-hidden whitespace-nowrap text-ellipsis text-base-content/50 leading-tight"
-              >{{ album.description }}</div>
             </div>
 
             <!-- Right side: Count and Status Icons -->
             <div class="ml-auto flex flex-row items-center text-base-content/30 gap-0.5">
               <span
                 v-if="props.showTotalCount !== false && getAlbumDisplayCount(album) > 0"
-                class="sidebar-item-count text-[10px] shrink-0"
+                class="sidebar-item-count shrink-0"
               >
                 {{ getAlbumDisplayCount(album).toLocaleString() }}
               </span>
@@ -199,7 +195,7 @@
           >
             <div
               v-if="isFolderFiltering ? shouldShowFilteredFolderTree(album.id) : album.is_expanded"
-              class="mr-0.5 my-0.5 py-0.5 pr-0.5 rounded bg-base-300/20 border border-base-content/5 shadow-none"
+              class="pr-0.5"
             >
               <AlbumFolder
                 :children="isFolderFiltering ? getFilteredFolderTree(album.id)?.[0]?.children : album.children?.[0]?.children"
@@ -218,10 +214,10 @@
         </li>
       </VueDraggable>
 
-      <li v-if="!isFolderSearchLoading && visibleAlbums.length === 0 && albums.length > 0" class="sidebar-empty text-sm">
+      <li v-if="!isFolderSearchLoading && visibleAlbums.length === 0 && albums.length > 0" class="sidebar-empty">
         <span class="text-center">{{ $t('album.no_folders_found') }}</span>
       </li>
-      <li v-else-if="!isLoading && albums.length === 0" class="sidebar-empty text-sm">
+      <li v-else-if="!isLoading && albums.length === 0" class="sidebar-empty">
         <span class="text-center">{{ $t('tooltip.not_found.albums') }}</span>
       </li>
     </ul>

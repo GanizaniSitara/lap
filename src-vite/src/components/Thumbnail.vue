@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'border-2 flex flex-col items-center cursor-pointer group',
+      'border flex flex-col items-center cursor-pointer group',
       thumbnailCornerClass,
       isTransitionDisabled ? 'transition-none' : 'transition-[background-color,color] ease-in-out duration-150 ',
       config.settings.grid.style === 0 ? 'p-1 w-fit h-fit' : 'w-full h-full',
@@ -36,8 +36,6 @@
         :src="thumbnailSrc"
         draggable="false"
         :class="{
-          'group-hover:scale-115': shouldScaleThumbnail,
-          'scale-115': shouldScaleThumbnail && isSelected,
           'object-contain': !isGeometryGridStyle && config.settings.grid.scaling === 0,
           'object-cover': isGeometryGridStyle || config.settings.grid.scaling === 1,
           'object-fill': !isGeometryGridStyle && config.settings.grid.scaling === 2,
@@ -58,7 +56,6 @@
           'object-contain': !isGeometryGridStyle && config.settings.grid.scaling === 0,
           'object-cover': isGeometryGridStyle || config.settings.grid.scaling === 1,
           'object-fill': !isGeometryGridStyle && config.settings.grid.scaling === 2,
-          'scale-115': shouldScaleThumbnail,
           'opacity-100': isVideoPreviewReady,
           'opacity-0': !isVideoPreviewReady,
         }"
@@ -83,7 +80,6 @@
           'object-contain': !isGeometryGridStyle && config.settings.grid.scaling === 0,
           'object-cover': isGeometryGridStyle || config.settings.grid.scaling === 1,
           'object-fill': !isGeometryGridStyle && config.settings.grid.scaling === 2,
-          'scale-115': shouldScaleThumbnail,
           'opacity-100': isAnimatedImagePreviewReady,
           'opacity-0': !isAnimatedImagePreviewReady,
         }"
@@ -335,7 +331,6 @@ const isGifFile = computed(() => getFileExtension(props.file?.name || props.file
 const animatedImagePreviewSrc = computed(() => getAssetSrc(props.file?.file_path || '', Number(props.file?.modified_at || 0)));
 const canPreviewAnimatedImage = computed(() => isAnimatableImageFile.value && !!animatedImagePreviewSrc.value);
 const isGeometryGridStyle = computed(() => config.settings.grid.style === 2 || config.settings.grid.style === 3);
-const shouldScaleThumbnail = computed(() => config.settings.grid.style === 1 || isGeometryGridStyle.value);
 const thumbnailCornerClass = computed(() => (
   config.settings.grid.thumbnailCorners === 1 ? 'rounded-none' : 'rounded-box'
 ));

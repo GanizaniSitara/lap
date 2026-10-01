@@ -52,7 +52,7 @@
     <div class="mx-1 mb-2 px-1 shrink-0">
       <div
         :class="[
-          'h-8 flex items-center rounded-box transition-colors bg-base-100/40',
+          'h-7 flex items-center rounded-box transition-colors bg-base-100/40',
           isPersonSearchFocused ? 'border-2 border-primary' : 'border border-base-content/10 hover:border-base-content/30',
           !isLoadingPersons && allPersonCount === 0 ? 'opacity-50' : '',
         ]"
@@ -63,7 +63,7 @@
           type="text"
           :disabled="!isLoadingPersons && allPersonCount === 0"
           :placeholder="$t('menu.person.search')"
-          class="w-full min-w-0 bg-transparent border-none focus:ring-0 px-2 text-sm placeholder-base-content/30 focus:outline-none disabled:opacity-50"
+          class="w-full min-w-0 bg-transparent border-none focus:ring-0 px-2 placeholder-base-content/30 focus:outline-none disabled:opacity-50"
           @focus="isPersonSearchFocused = true"
           @blur="isPersonSearchFocused = false"
         />
@@ -88,7 +88,7 @@
       <!-- Named People Section -->
       <div class="mb-2">
         <div
-          class="px-2 py-1.5 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-base-content/60 select-none cursor-pointer hover:text-base-content"
+          class="px-2 h-7 flex items-center justify-between font-bold text-base-content/60 select-none cursor-pointer hover:text-base-content"
           @click="isNamedSectionCollapsed = !isNamedSectionCollapsed"
         >
           <div class="flex items-center gap-1.5 min-w-0">
@@ -98,7 +98,7 @@
             />
             <span class="truncate">{{ $t('menu.person.named_people') || 'Named People' }}</span>
           </div>
-          <span class="text-[11px] tabular-nums font-normal opacity-70">
+          <span class="tabular-nums font-normal opacity-70">
             {{ namedPersons.length.toLocaleString() }}
           </span>
         </div>
@@ -111,20 +111,20 @@
           >
             <div
               :class="[
-                'sidebar-item gap-2 group',
+                'sidebar-item gap-1.5 group',
                 selectedPerson && selectedPerson.id === person.id && !isRenamingPerson ? 'sidebar-item-selected' : 'sidebar-item-hover',
               ]"
               @click="selectPerson(person)"
               @contextmenu.prevent.stop="(e: MouseEvent) => handlePersonContextMenu(person, e)"
             >
               <!-- Face thumbnail -->
-              <div class="w-8 h-8 rounded-full overflow-hidden bg-base-300/70 ring-1 ring-base-content/5 shrink-0 flex items-center justify-center">
-                <img 
-                  v-if="person.thumbnail" 
-                  :src="'data:image/jpeg;base64,' + person.thumbnail" 
+              <div class="w-6 h-6 rounded-full overflow-hidden bg-base-300/70 ring-1 ring-base-content/5 shrink-0 flex items-center justify-center">
+                <img
+                  v-if="person.thumbnail"
+                  :src="'data:image/jpeg;base64,' + person.thumbnail"
                   class="w-full h-full object-cover pointer-events-none"
                 />
-                <IconPerson v-else class="w-5 h-5 text-base-content/30" />
+                <IconPerson v-else class="w-4 h-4 text-base-content/30" />
               </div>
               
               <!-- Name input or display -->
@@ -161,7 +161,7 @@
               </template>
             </div>
           </li>
-          <li v-if="namedPersons.length === 0" class="px-4 py-2 text-xs text-base-content/40 italic">
+          <li v-if="namedPersons.length === 0" class="px-4 py-1 text-base-content/40 italic">
             {{ $t('menu.person.no_named_people') || 'No named people' }}
           </li>
         </ul>
@@ -170,7 +170,7 @@
       <!-- Unnamed People Section -->
       <div class="mb-2">
         <div
-          class="px-2 py-1.5 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-base-content/60 select-none cursor-pointer hover:text-base-content"
+          class="px-2 h-7 flex items-center justify-between font-bold text-base-content/60 select-none cursor-pointer hover:text-base-content"
           @click="isUnnamedSectionCollapsed = !isUnnamedSectionCollapsed"
         >
           <div class="flex items-center gap-1.5 min-w-0">
@@ -180,7 +180,7 @@
             />
             <span class="truncate">{{ $t('menu.person.unnamed_people') || 'Unnamed People' }}</span>
           </div>
-          <span class="text-[11px] tabular-nums font-normal opacity-70">
+          <span class="tabular-nums font-normal opacity-70">
             {{ unnamedPersons.length.toLocaleString() }}
           </span>
         </div>
@@ -193,20 +193,20 @@
           >
             <div
               :class="[
-                'sidebar-item gap-2 group',
+                'sidebar-item gap-1.5 group',
                 selectedPerson && selectedPerson.id === person.id && !isRenamingPerson ? 'sidebar-item-selected' : 'sidebar-item-hover',
               ]"
               @click="selectPerson(person)"
               @contextmenu.prevent.stop="(e: MouseEvent) => handlePersonContextMenu(person, e)"
             >
               <!-- Face thumbnail -->
-              <div class="w-8 h-8 rounded-full overflow-hidden bg-base-300/70 ring-1 ring-base-content/5 shrink-0 flex items-center justify-center">
-                <img 
-                  v-if="person.thumbnail" 
-                  :src="'data:image/jpeg;base64,' + person.thumbnail" 
+              <div class="w-6 h-6 rounded-full overflow-hidden bg-base-300/70 ring-1 ring-base-content/5 shrink-0 flex items-center justify-center">
+                <img
+                  v-if="person.thumbnail"
+                  :src="'data:image/jpeg;base64,' + person.thumbnail"
                   class="w-full h-full object-cover pointer-events-none"
                 />
-                <IconPerson v-else class="w-5 h-5 text-base-content/30" />
+                <IconPerson v-else class="w-4 h-4 text-base-content/30" />
               </div>
               
               <!-- Name input or display -->
@@ -243,7 +243,7 @@
               </template>
             </div>
           </li>
-          <li v-if="unnamedPersons.length === 0" class="px-4 py-2 text-xs text-base-content/40 italic">
+          <li v-if="unnamedPersons.length === 0" class="px-4 py-1 text-base-content/40 italic">
             {{ $t('menu.person.no_unnamed_people') || 'No unnamed people' }}
           </li>
         </ul>

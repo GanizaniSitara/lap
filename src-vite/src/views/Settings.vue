@@ -704,7 +704,7 @@ import {
   cancelMultilingualImageSearchModelDownload,
   listenImageSearchModelDownloadProgress,
 } from '@/common/api';
-import { formatFileSize, isLinux, isMac, setTheme, SCALE_VALUES } from '@/common/utils';
+import { formatFileSize, isLinux, isMac, setTheme, SCALE_VALUES, UI_FONT_SIZES, normalizeScale, scaleToFontPx } from '@/common/utils';
 import { getShortcutLabels, ShortcutActionId, ShortcutPlatform } from '@/common/shortcuts';
 import { useToast } from '@/common/toast';
 import { IconClose, IconRestore } from '@/common/icons';
@@ -735,8 +735,9 @@ const settingsTabs = [
 
 const appWindow = getCurrentWebviewWindow()
 let unlistenCloseRequested: (() => void) | null = null;
-const SETTINGS_BASE_WIDTH = 600;
-const SETTINGS_BASE_HEIGHT = 620;
+// Sized for the 12px root font (scale 1); scales with the UI font-size setting.
+const SETTINGS_BASE_WIDTH = 450;
+const SETTINGS_BASE_HEIGHT = 465;
 const dbStorageDir = ref('');
 const isChangingDbStorage = ref(false);
 const hasCustomDbStorage = ref(false);
@@ -804,14 +805,11 @@ const currentTheme = computed({
   }
 });
 
-const scaleOptions = computed(() => {
-  const options = localeMsg.value.settings.general.font_size_options;
-  const values = [0.8, 0.9, 1, 1.1, 1.2];
-  return values.map((value, index) => ({
-    value,
-    label: options[index] ?? String(value),
-  }));
-});
+// One global UI font size in px (drives html font-size in every window).
+const scaleOptions = computed(() => SCALE_VALUES.map((value, index) => ({
+  value,
+  label: `${UI_FONT_SIZES[index]} px`,
+})));
 
 const folderSortOptions = computed(() => {
   const options = localeMsg.value.settings.browse.folder_sort_options || [];
@@ -1661,13 +1659,8 @@ async function confirmResetDbStorageDir() {
   }
 }
 
-function normalizeScale(value: number) {
-  return SCALE_VALUES.find((item) => item === Number(value)) ?? 1;
-}
-
 function applyWindowScale(scale: number) {
-  const normalizedScale = normalizeScale(scale);
-  document.documentElement.style.fontSize = `${normalizedScale * 16}px`;
+  document.documentElement.style.fontSize = `${scaleToFontPx(scale)}px`;
 }
 
 async function updateSettingsWindowSize(scale: number) {

@@ -6,6 +6,28 @@
   logs: false;
 }
 
+/* Picasa-style flat chrome: square corners everywhere, light-grey panes and a blue
+   selection colour on the light theme. The UI font-size setting (App.vue) overrides
+   the root font-size inline; 12px here avoids a 16px flash before it applies. */
+:root, :root[data-theme] {
+  --radius-box: 0;
+  --radius-field: 0;
+  --radius-selector: 0;
+}
+
+:root[data-theme="light"] {
+  --color-base-100: #ffffff;
+  --color-base-200: #f4f4f4;
+  --color-base-300: #e9e9e9;
+  --color-base-content: #202020;
+  --color-primary: #3d7edb;
+  --color-primary-content: #ffffff;
+}
+
+html {
+  font-size: 12px;
+}
+
 html, body {
   overscroll-behavior: none;
 }
@@ -76,16 +98,16 @@ html, body {
 
 /* sidebar section header */
 @utility sidebar-section-label {
-  @apply px-2 h-10 flex items-center text-sm text-base-content/30 cursor-default whitespace-nowrap;
+  @apply px-2 h-7 flex items-center text-base-content/30 cursor-default whitespace-nowrap;
 }
 
 /* sidebar panel header */
 @utility sidebar-panel-header {
-  @apply px-2 h-10 flex items-center justify-between gap-1 whitespace-nowrap shrink-0 text-base-content/30;
+  @apply px-2 h-7 flex items-center justify-between gap-1 whitespace-nowrap shrink-0 text-base-content/30;
 }
 
 @utility sidebar-panel-header-title {
-  @apply font-bold mr-auto uppercase text-xs tracking-wide leading-none;
+  @apply font-bold mr-auto leading-none;
 }
 
 @utility sidebar-panel-action {
@@ -97,16 +119,16 @@ html, body {
 }
 
 @utility sidebar-header-tab {
-  @apply tab h-10 px-0 min-w-0 whitespace-nowrap font-bold uppercase text-xs tracking-wide leading-none;
+  @apply tab h-7 px-0 min-w-0 whitespace-nowrap font-bold leading-none;
 }
 
 .sidebar-header-tab.tab-active {
   @apply text-primary;
 }
 
-/* sidebar list items */
+/* sidebar list items: Picasa-dense ~22px rows (1.85rem at the 12px root font), flat */
 @utility sidebar-item {
-  @apply mx-1 px-1 h-10 flex items-center rounded-box whitespace-nowrap cursor-pointer transition-all duration-200 ease-in-out;
+  @apply px-1 h-[1.85rem] flex items-center whitespace-nowrap cursor-pointer;
 }
 
 @utility sidebar-item-hover {
@@ -123,11 +145,11 @@ html, body {
 }
 
 @utility sidebar-item-compact {
-  @apply h-8 mr-1;
+  @apply h-[1.85rem];
 }
 
 @utility sidebar-item-media {
-  @apply h-12;
+  @apply h-10;
 }
 
 @utility sidebar-item-label {
@@ -135,7 +157,7 @@ html, body {
 }
 
 @utility sidebar-item-count {
-  @apply badge badge-xs tabular-nums border-0 bg-base-100/30 text-base-content/30;
+  @apply px-1 tabular-nums text-base-content/50;
 }
 
 /* sidebar empty state */

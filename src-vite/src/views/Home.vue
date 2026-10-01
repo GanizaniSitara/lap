@@ -22,7 +22,7 @@
         ref="leftPanelRootRef"
         tabindex="-1"
         :class="[
-          'relative flex my-1 ml-1 z-10 select-none outline-none',
+          'relative flex z-10 select-none outline-none border-r border-base-content/15',
           !leftPanelLayoutExpanded && isMac ? 'mt-12 mb-8': '',
         ]"
         :style="{ width: leftPanelLayoutExpanded ? leftPanelWidth : '3rem' }"
@@ -30,7 +30,7 @@
         @focus="uiStore.setActivePane('left-sidebar')"
       >
           <div
-            class="absolute inset-y-0 left-0 bg-base-200 rounded-box"
+            class="absolute inset-y-0 left-0 bg-base-200"
             :class="isDraggingSplitter ? '' : 'transition-[width] duration-200 ease-in-out'"
             :style="{ width: leftPanelVisualExpanded ? leftPanelWidth : '3rem' }"
           ></div>
@@ -70,7 +70,7 @@
           <!-- library title -->
           <div
             v-if="leftPanelMounted || databaseCorrupted"
-            class="absolute top-0 left-[52px] right-0 z-10 h-10 flex items-center"
+            class="absolute top-0 left-12 right-0 z-10 h-10 flex items-center"
             data-tauri-drag-region
           >
             <ContextMenu :menuItems="libraryMenuItems">
@@ -91,7 +91,7 @@
             v-if="leftPanelMounted || libraryEmpty"
             class="absolute inset-y-0 left-12 pt-10 px-1 border-l border-base-content/5 flex flex-col overflow-hidden transition-[transform,opacity] duration-200 ease-in-out"
             :class="leftPanelVisualExpanded ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 pointer-events-none'"
-            :style="{ width: `calc(${Number(config.leftPanel.width || 260) / 16}rem - 3rem)` }"
+            :style="{ width: `calc(${Number(config.leftPanel.width || 260) / UI_BASE_FONT_PX}rem - 3rem)` }"
           >
 
             <!-- Component panel (flex-1 to fill remaining space) -->
@@ -139,12 +139,7 @@
       ></div>
        
       <!-- content area -->
-      <div 
-        :class="[
-          'flex-1 flex relative',
-          showDesktopTitleBar ? 'rounded-tl-box' : '',
-        ]"
-      >
+      <div class="flex-1 flex relative">
         <div v-if="databaseCorrupted" class="flex-1 flex flex-col items-center justify-center gap-3 p-8 text-center" role="alert">
           <h2 class="text-lg font-medium">{{ $t('library.database_corrupted') }}</h2>
           <p class="text-sm text-base-content/60">{{ $t('library.database_corrupted_hint') }}</p>
@@ -185,7 +180,7 @@ import { getName } from '@tauri-apps/api/app';
 import { invoke } from '@tauri-apps/api/core';
 import { config, libConfig } from '@/common/config';
 import { useUIStore } from '@/stores/uiStore';
-import { isWin, isMac, isLinux, SCALE_VALUES } from '@/common/utils';
+import { isWin, isMac, isLinux, UI_BASE_FONT_PX, normalizeScale } from '@/common/utils';
 import { matchesShortcut, ShortcutPlatform } from '@/common/shortcuts';
 import { SIDEBAR } from '@/common/constants';
 import { getAppConfig, switchLibrary, cancelIndexing, cancelFaceIndex } from '@/common/api';
@@ -258,8 +253,9 @@ const checkLibraryEmpty = async () => {
     libraryEmpty.value = false;
   }
 };
-const SETTINGS_BASE_WIDTH = 600;
-const SETTINGS_BASE_HEIGHT = 620;
+// Sized for the 12px root font (scale 1); keep in sync with Settings.vue.
+const SETTINGS_BASE_WIDTH = 450;
+const SETTINGS_BASE_HEIGHT = 465;
 
 /// i18n
 const { locale, messages } = useI18n();
@@ -376,8 +372,9 @@ const activeSidebarButton = computed(() =>
   buttons.value.find(item => item.index === config.main.sidebarIndex) || buttons.value[SIDEBAR.LIBRARY]
 );
 
+// leftPanel.width is stored in px at scale 1; render in rem so it follows the UI font size.
 const leftPanelWidth = computed(() =>
-  `${(Number(config.leftPanel.width || 260) / 16).toFixed(2)}rem`
+  `${(Number(config.leftPanel.width || 260) / UI_BASE_FONT_PX).toFixed(2)}rem`
 );
 
 const visibleButtons = computed(() =>
@@ -750,7 +747,7 @@ async function clickSettings(tabIndex?: number) {
 }
 
 function getSettingsWindowScale() {
-  return SCALE_VALUES.find((item) => item === Number(config.settings.scale)) ?? 1;
+  return normalizeScale(config.settings.scale);
 }
 
 </script>

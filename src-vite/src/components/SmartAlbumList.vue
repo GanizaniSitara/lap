@@ -15,7 +15,7 @@
     <div class="mx-1 mb-2 px-1 shrink-0">
       <div
         :class="[
-          'h-8 flex items-center rounded-box transition-colors bg-base-100/40',
+          'h-7 flex items-center rounded-box transition-colors bg-base-100/40',
           isSmartAlbumSearchFocused ? 'border-2 border-primary' : 'border border-base-content/10 hover:border-base-content/30',
           customSmartAlbums.length === 0 ? 'opacity-50' : '',
         ]"
@@ -26,7 +26,7 @@
           type="text"
           :disabled="customSmartAlbums.length === 0"
           :placeholder="$t('album.search_smart_albums')"
-          class="w-full min-w-0 bg-transparent border-none focus:ring-0 px-2 text-sm placeholder-base-content/30 focus:outline-none disabled:opacity-50"
+          class="w-full min-w-0 bg-transparent border-none focus:ring-0 px-2 placeholder-base-content/30 focus:outline-none disabled:opacity-50"
           @focus="isSmartAlbumSearchFocused = true"
           @blur="isSmartAlbumSearchFocused = false"
         />

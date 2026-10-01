@@ -105,10 +105,10 @@ export const useConfigStore = defineStore('configStore', {
 
       // general settings
       language: 'en',             // default language
-      appearance: 1,              // appearance (0: light; 1: dark)
+      appearance: 0,              // appearance (0: light; 1: dark) - light is the Picasa-style default
       lightTheme: 0,              // light theme color index
       darkTheme: 0,               // dark theme color index
-      scale: 1,                   // root font-size scale
+      scale: 1,                   // UI font size as a scale of UI_BASE_FONT_PX (1 = 12px), see utils.ts
       showToolTip: true,          // show button tooltip
       showStatusBar: true,        // show status bar
       debugMode: false,           // debug mode

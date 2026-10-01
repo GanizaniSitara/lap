@@ -57,7 +57,7 @@
     <div class="flex items-center gap-1.5 shrink-0 ml-auto pl-2">
       <div
         v-if="showUpdateIcon"
-        class="px-1.5 py-0.5 flex items-center gap-1 rounded-full bg-base-200 text-primary/70 text-[11px] font-mono mr-1 cursor-pointer hover:bg-base-300"
+        class="px-1.5 py-0.5 flex items-center gap-1 rounded-full bg-base-200 text-primary/70 font-mono mr-1 cursor-pointer hover:bg-base-300"
         @click.stop="emit('toggle-scan')"
       >
         <component :is="updateIconComponent" class="t-icon-size-xs shrink-0" :class="{ 'animate-spin': isUpdateAnimating }" />
@@ -68,7 +68,7 @@
         v-if="!isEmbedded"
         type="button"
         :class="[
-          'btn btn-ghost btn-xs h-6 px-2 flex items-center gap-1.5 text-xs font-medium rounded transition-colors cursor-pointer select-none',
+          'btn btn-ghost btn-xs h-6 px-2 flex items-center gap-1.5 font-medium rounded transition-colors cursor-pointer select-none',
           isInfoOpen 
             ? 'bg-primary/20 text-primary hover:bg-primary/30' 
             : 'text-base-content/60 hover:text-base-content hover:bg-base-200'
@@ -77,7 +77,7 @@
         @click.stop="emit('toggle-info')"
       >
         <IconInformation class="w-3.5 h-3.5" />
-        <span class="text-[11px]">{{ $t('file_info.title') }}</span>
+        <span>{{ $t('file_info.title') }}</span>
       </button>
     </div>
   </div>
@@ -191,7 +191,7 @@ const hasRealSelectedFile = computed(() => {
   return !!file && !file.isPlaceholder;
 });
 const containerClass = computed(() => {
-  const base = 'px-2 h-8 flex items-center justify-between text-sm cursor-default bg-base-300';
+  const base = 'px-2 h-8 flex items-center justify-between cursor-default bg-base-300';
   if (props.isEmbedded) return base;
   return `${base} absolute bottom-0 left-0 right-0 z-30`;
 });

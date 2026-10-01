@@ -14,7 +14,7 @@
         ]"
         @click="selectItem(item.id)"
       >
-        <component :is="item.icon" class="mx-1 w-5 h-5 shrink-0" />
+        <component :is="item.icon" class="mx-1 w-4 h-4 shrink-0" />
         <div class="sidebar-item-label">
           <span>{{ item.label }}</span>
         </div>
@@ -57,7 +57,7 @@
               >
                 <IconStarFilled class="mx-1 w-4 h-4 shrink-0" />
                 <span class="sidebar-item-label">{{ localeMsg.rating.rated }}</span>
-                <span v-if="ratedCount" class="text-[10px] tabular-nums text-base-content/30 mr-2">{{ ratedCount.toLocaleString() }}</span>
+                <span v-if="ratedCount" class="tabular-nums text-base-content/30 mr-2">{{ ratedCount.toLocaleString() }}</span>
               </div>
             </li>
             <li v-for="rating in [5, 4, 3, 2, 1]" :key="rating" class="pl-4">
@@ -75,7 +75,7 @@
                     class="w-4 h-4 shrink-0"
                   />
                 </div>
-                <span v-if="ratingCounts[rating]" class="ml-auto text-[10px] tabular-nums text-base-content/30 mr-2">{{ ratingCounts[rating].toLocaleString() }}</span>
+                <span v-if="ratingCounts[rating]" class="ml-auto tabular-nums text-base-content/30 mr-2">{{ ratingCounts[rating].toLocaleString() }}</span>
               </div>
             </li>
             <li class="pl-4">

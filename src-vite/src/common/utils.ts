@@ -23,8 +23,27 @@ export const isWin = getOS() === 'win';
 export const isLinux = getOS() === 'linux';
 export const separator = isWin ? '\\' : '/';
 
+// One global UI font size drives `html { font-size }`, so every rem-based pane scales together.
+// Picasa-like default of 12px; `settings.scale` is stored relative to that base (1 = 12px).
+export const UI_BASE_FONT_PX = 12;
+export const UI_FONT_SIZES = [10, 11, 12, 13, 14, 16];
 // scale values for window size and font size
-export const SCALE_VALUES = [0.8, 0.9, 1, 1.1, 1.2];
+export const SCALE_VALUES = UI_FONT_SIZES.map((px) => px / UI_BASE_FONT_PX);
+
+export function normalizeScale(value: unknown): number {
+  return SCALE_VALUES.find((item) => item === Number(value)) ?? 1;
+}
+
+/// root font size in px for a given scale setting
+export function scaleToFontPx(scale: unknown): number {
+  return Math.round(normalizeScale(scale) * UI_BASE_FONT_PX * 100) / 100;
+}
+
+/// current root font size in px (what 1rem resolves to), for layout math done in px
+export function rootFontPx(): number {
+  const value = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  return Number.isFinite(value) && value > 0 ? value : UI_BASE_FONT_PX;
+}
 
 /// set the theme
 export function setTheme(appearance: number, themeId: number) {

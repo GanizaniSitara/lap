@@ -128,7 +128,7 @@ import Thumbnail from '@/components/Thumbnail.vue';
 import VirtualScroll from '@/components/VirtualScroll.vue';
 import { GROUP } from '@/common/constants';
 import { calculateJustifiedLayout, calculateLinearRowLayout, calculateLinearColumnLayout, calculateMasonryLayout, type Geometry } from '@/common/layout';
-import { buildFolderBreadcrumbs, formatFolderBreadcrumb, isWithinRootPath } from '@/common/utils';
+import { buildFolderBreadcrumbs, formatFolderBreadcrumb, isWithinRootPath, rootFontPx } from '@/common/utils';
 import Breadcrumb from '@/components/Breadcrumb.vue';
 import {
   IconCalendarDay,
@@ -209,8 +209,8 @@ const containerRef = ref<HTMLElement | null>(null);
 const scroller = ref<any>(null);
 const columnCount = ref(4);
 const containerWidth = ref(0);
-const GROUP_HEADER_HEIGHT = 40;
-const groupHeaderHeight = computed(() => GROUP_HEADER_HEIGHT * Number(config.settings.scale || 1));
+// group row slot = 2.5rem (h-8 header + padding); track the scale setting so it recomputes
+const groupHeaderHeight = computed(() => { void config.settings.scale; return 2.5 * rootFontPx(); });
 let pendingPointerDrag: {
   pointerId: number;
   index: number;
@@ -706,8 +706,8 @@ function scrollToItem(index: number, center = false) {
     const clientHeight = el.clientHeight;
     
     // Account for top and bottom padding
-    const topPadding = 48 * Number(config.settings.scale || 1);
-    const bottomPadding = config.settings.showStatusBar ? 32 : 4; // pb-8 = 32px, pb-1 = 4px
+    const topPadding = 3 * rootFontPx(); // pt-12
+    const bottomPadding = (config.settings.showStatusBar ? 2 : 0.25) * rootFontPx(); // pb-8 / pb-1
 
     if (center) {
       el.scrollTop = Math.min(
@@ -797,7 +797,7 @@ function centerItem(index: number) {
 
 function getNextItemIndex(currentIndex: number, direction: 'up' | 'down', page = false): number {
   const pageHeight = Math.max(1, (scroller.value?.$el.clientHeight ?? 0)
-    - 48 * Number(config.settings.scale || 1) - (config.settings.showStatusBar ? 32 : 4));
+    - 3 * rootFontPx() - (config.settings.showStatusBar ? 2 : 0.25) * rootFontPx());
   const style = config.settings.grid.style;
   const supportsGeometryNavigation = hasGroupRows.value
     || style === 2

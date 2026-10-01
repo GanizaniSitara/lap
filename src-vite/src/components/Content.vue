@@ -766,7 +766,7 @@ import { isWin, isMac, isLinux, setTheme, separator,
          getCachedThumbnailDataUrl,
          clearCachedThumbnailDataUrl,
          extractFileName, combineFileName, getFolderPath, getFolderName, getSelectOptions, 
-         shortenFilename, getSlideShowInterval, getFullPath, normalizePathForCompare, isWithinRootPath, shouldUseBackendPreview } from '@/common/utils';
+         shortenFilename, getSlideShowInterval, getFullPath, normalizePathForCompare, isWithinRootPath, shouldUseBackendPreview, rootFontPx } from '@/common/utils';
 
 import DropDownSelect from '@/components/DropDownSelect.vue';
 import ProgressBar from '@/components/ProgressBar.vue';
@@ -4109,9 +4109,9 @@ function updateScrollPosition(currentScrollTop: number, currentScrollHeight: num
     if (!isFilmstripView.value) {
       // Calculate max scroll top
       const totalRows = Math.ceil(scrollbarTotal.value / columnCount.value);
-      const topPadding = 48;
-      const bottomPadding = config.settings.showStatusBar ? 32 : 4;
-      
+      const topPadding = 3 * rootFontPx();
+      const bottomPadding = (config.settings.showStatusBar ? 2 : 0.25) * rootFontPx();
+
       // Determine effective scroll height
       // If provided (from event), use it. Otherwise calculate based on layout.
       let scrollHeight = currentScrollHeight;
@@ -4171,9 +4171,9 @@ function handleScrollUpdate(newIndex: number) {
     
     // Calculate max scroll top
     const totalRows = Math.ceil(scrollbarTotal.value / columnCount.value);
-    const topPadding = 48;
-    const bottomPadding = config.settings.showStatusBar ? 32 : 4;
-    
+    const topPadding = 3 * rootFontPx();
+    const bottomPadding = (config.settings.showStatusBar ? 2 : 0.25) * rootFontPx();
+
     // Use reported layout height when available; date headers also affect normal grid height.
     const contentHeight = layoutContentHeight.value > 0
       ? layoutContentHeight.value 

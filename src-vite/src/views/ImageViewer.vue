@@ -218,7 +218,7 @@ import { useI18n } from 'vue-i18n';
 import { useToast } from '@/common/toast';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
-import { isWin, isMac, isLinux, setTheme, getSlideShowInterval, SCALE_VALUES, clearCachedThumbnailDataUrl } from '@/common/utils';
+import { isWin, isMac, isLinux, setTheme, getSlideShowInterval, scaleToFontPx, clearCachedThumbnailDataUrl } from '@/common/utils';
 import { matchesShortcut, ShortcutActionId, ShortcutPlatform, VIEW_BACKGROUND_SHORTCUTS } from '@/common/shortcuts';
 import {
   editFileComment,
@@ -340,18 +340,13 @@ const activeFileId = computed(() => {
 const statusPane = computed<Pane>(() => splitCount.value > 1 ? activePane.value : 'left');
 const showEmbeddedStatusBar = computed(() => config.settings.showStatusBar && !isFullScreen.value);
 
-function normalizeScale(value: number) {
-  return SCALE_VALUES.find((item) => item === Number(value)) ?? 1;
-}
-
 function normalizeSplitCount(value: unknown): 1 | 2 | 4 {
   const count = Number(value);
   return count === 2 || count === 4 ? count : 1;
 }
 
 function applyViewerScale(scale: number) {
-  const normalizedScale = normalizeScale(scale);
-  document.documentElement.style.fontSize = `${normalizedScale * 16}px`;
+  document.documentElement.style.fontSize = `${scaleToFontPx(scale)}px`;
 }
 
 function handleRootMouseMove(event: MouseEvent) {

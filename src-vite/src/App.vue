@@ -16,7 +16,7 @@ import { useConfigStore } from '@/stores/configStore';
 import { useLibraryStore } from '@/stores/libraryStore';
 import { useUIStore } from '@/stores/uiStore';
 import { clearIndexRecoveryInfo } from '@/common/api';
-import { isMac, setTheme, SCALE_VALUES } from '@/common/utils';
+import { isMac, setTheme, SCALE_VALUES, normalizeScale, scaleToFontPx } from '@/common/utils';
 import { matchesShortcut } from '@/common/shortcuts';
 import ToastContainer from '@/components/ToastContainer.vue';
 
@@ -157,13 +157,8 @@ const handleKeyDown = (event) => {
   });
 };
 
-function normalizeScale(value) {
-  return SCALE_VALUES.find((item) => item === Number(value)) ?? 1;
-}
-
 function applyMainWindowScale(scale) {
-  const normalizedScale = normalizeScale(scale);
-  document.documentElement.style.fontSize = `${normalizedScale * 16}px`;
+  document.documentElement.style.fontSize = `${scaleToFontPx(scale)}px`;
 }
 
 function handleMainWindowScaleShortcut(event) {

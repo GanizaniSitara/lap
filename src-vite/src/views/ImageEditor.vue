@@ -553,7 +553,7 @@ import { useRouter } from 'vue-router';
 import { useUIStore } from '@/stores/uiStore';
 import { useI18n } from 'vue-i18n';
 import { config } from '@/common/config';
-import { isWin, isLinux, setTheme, SCALE_VALUES, getFolderPath, getFileExtension, shortenFilename, getFullPath, combineFileName, getSelectOptions, getAssetSrc, getPreviewUrl, getThumbUrl, shouldUseBackendPreview } from '@/common/utils';
+import { isWin, isLinux, setTheme, scaleToFontPx, getFolderPath, getFileExtension, shortenFilename, getFullPath, combineFileName, getSelectOptions, getAssetSrc, getPreviewUrl, getThumbUrl, shouldUseBackendPreview } from '@/common/utils';
 import { editImage, checkFileExists, getFileInfo } from '@/common/api';
 import { getMaxInscribedRect, clampCenterInRotatedRect, maxResizeT } from '@/common/geometry';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
@@ -1341,8 +1341,7 @@ watch(() => config.settings.darkTheme, (newDarkTheme) => {
 });
 
 watch(() => Number(config.settings.scale || 1), (newScale) => {
-  const normalizedScale = SCALE_VALUES.find((item) => item === newScale) ?? 1;
-  document.documentElement.style.fontSize = `${normalizedScale * 16}px`;
+  document.documentElement.style.fontSize = `${scaleToFontPx(newScale)}px`;
 });
 
 onMounted(async () => {
