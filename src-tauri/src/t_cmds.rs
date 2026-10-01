@@ -17,7 +17,7 @@ use crate::t_similar;
 use crate::t_sqlite::{
     ACamera, ACollection, ACollectionOrder, ACollectionSelectionCount, AFile, AFileCollection, AFolder, ALens, ALocation, ATag, ATagFileState,
     ATagSelectionCount, AThumb, ATimeLine, Album, AlbumDisplayOrder, GroupedQueryResult, ImageSearchParams, Person,
-    PersonPage, PersonPageRequest, QueryParams, SmartQueryParams,
+    PersonPage, PersonPageRequest, QueryParams, SearchToken, SmartQueryParams,
 };
 use crate::t_storage;
 use crate::t_utils;
@@ -1142,6 +1142,18 @@ pub async fn get_query_files(
 ) -> Result<Vec<AFile>, String> {
     AFile::get_query_files(&params, offset, limit)
         .map_err(|e| format!("Error while getting query files: {}", e))
+}
+
+/// Search files using unstructured query string and/or structured faceted search tokens
+#[tauri::command]
+pub async fn search_files(
+    search_query: Option<String>,
+    tokens: Option<Vec<SearchToken>>,
+    offset: Option<i64>,
+    limit: Option<i64>,
+) -> Result<Vec<AFile>, String> {
+    AFile::search_files(search_query, tokens, offset, limit)
+        .map_err(|e| format!("Error while searching files: {}", e))
 }
 
 /// Get file metadata for a bounded set of IDs without traversing a virtualized query.

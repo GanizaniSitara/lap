@@ -2060,11 +2060,22 @@ pub struct ATimeLine {
     pub position: i64, // Row index in the sorted fileList
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub struct SearchToken {
+    #[serde(alias = "token_type", alias = "tokenType")]
+    pub token_type: String,
+    pub value: String,
+}
+
 /// Define the query parameters struct for file queries
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct QueryParams {
     pub search_file_name: String, // file name search
+    #[serde(default, alias = "search_query", alias = "searchQuery")]
+    pub search_query: Option<String>,
+    #[serde(default, alias = "search_tokens", alias = "searchTokens", alias = "tokens")]
+    pub search_tokens: Option<Vec<SearchToken>>,
     pub search_file_type: i64,
     pub sort_type: i64,
     pub sort_order: i64,
@@ -2104,6 +2115,44 @@ pub struct QueryParams {
     pub gps_max_lon: Option<f64>,
     #[serde(default)]
     pub group_by: i64,
+}
+
+impl Default for QueryParams {
+    fn default() -> Self {
+        Self {
+            search_file_name: String::new(),
+            search_query: None,
+            search_tokens: None,
+            search_file_type: 0,
+            sort_type: 3,
+            sort_order: 0,
+            random_seed: 0,
+            search_all_subfolders: String::new(),
+            search_folder: String::new(),
+            start_date: 0,
+            end_date: 0,
+            calendar_sort: 0,
+            folder_sort: 0,
+            category_sort: 0,
+            make: String::new(),
+            model: String::new(),
+            lens_make: String::new(),
+            lens_model: String::new(),
+            location_admin1: String::new(),
+            location_name: String::new(),
+            is_favorite: false,
+            rating: -1,
+            culling_flag: -1,
+            tag_id: 0,
+            tag_group_id: 0,
+            person_id: 0,
+            gps_min_lat: None,
+            gps_max_lat: None,
+            gps_min_lon: None,
+            gps_max_lon: None,
+            group_by: 0,
+        }
+    }
 }
 
 fn default_culling_flag() -> i64 {
@@ -4803,13 +4852,56 @@ impl AFile {
             ));
         }
 
-        if !params.search_file_name.is_empty() {
-            conditions.push("(a.name LIKE ? COLLATE NOCASE OR a.comments LIKE ? COLLATE NOCASE OR a.ocr_text LIKE ? COLLATE NOCASE OR a.ai_tags LIKE ? COLLATE NOCASE)".to_string());
-            let pattern = format!("%{}%", params.search_file_name);
-            sql_params.push(Box::new(pattern.clone()));
-            sql_params.push(Box::new(pattern.clone()));
-            sql_params.push(Box::new(pattern.clone()));
-            sql_params.push(Box::new(pattern));
+        if let Some(tokens) = &params.search_tokens {
+            if !tokens.is_empty() {
+                for token in tokens {
+                    let val = token.value.trim();
+                    if val.is_empty() {
+                        continue;
+                    }
+                    let pattern = format!("%{}%", val);
+                    match token.token_type.trim().to_lowercase().as_str() {
+                        "person" | "people" => {
+                            if let Ok(pid) = val.parse::<i64>() {
+                                conditions.push("EXISTS (SELECT 1 FROM faces f JOIN persons p ON f.person_id = p.id WHERE f.file_id = a.id AND (p.name LIKE ? COLLATE NOCASE OR p.id = ?))".to_string());
+                                sql_params.push(Box::new(pattern));
+                                sql_params.push(Box::new(pid));
+                            } else {
+                                conditions.push("EXISTS (SELECT 1 FROM faces f JOIN persons p ON f.person_id = p.id WHERE f.file_id = a.id AND p.name LIKE ? COLLATE NOCASE)".to_string());
+                                sql_params.push(Box::new(pattern));
+                            }
+                        }
+                        "tag" | "tags" => {
+                            if let Ok(tid) = val.parse::<i64>() {
+                                conditions.push("EXISTS (SELECT 1 FROM afile_tags ft JOIN atags t ON ft.tag_id = t.id WHERE ft.file_id = a.id AND (t.name LIKE ? COLLATE NOCASE OR t.id = ?))".to_string());
+                                sql_params.push(Box::new(pattern));
+                                sql_params.push(Box::new(tid));
+                            } else {
+                                conditions.push("EXISTS (SELECT 1 FROM afile_tags ft JOIN atags t ON ft.tag_id = t.id WHERE ft.file_id = a.id AND t.name LIKE ? COLLATE NOCASE)".to_string());
+                                sql_params.push(Box::new(pattern));
+                            }
+                        }
+                        "text" | "ocr" => {
+                            conditions.push("a.ocr_text LIKE ? COLLATE NOCASE".to_string());
+                            sql_params.push(Box::new(pattern));
+                        }
+                        "object" | "objects" => {
+                            conditions.push("a.ai_objects LIKE ? COLLATE NOCASE".to_string());
+                            sql_params.push(Box::new(pattern));
+                        }
+                        "raw" | _ => {
+                            conditions.push("(a.name LIKE ? COLLATE NOCASE OR a.comments LIKE ? COLLATE NOCASE OR a.ocr_text LIKE ? COLLATE NOCASE OR a.ai_objects LIKE ? COLLATE NOCASE OR a.ai_tags LIKE ? COLLATE NOCASE OR EXISTS (SELECT 1 FROM afile_tags ft JOIN atags t ON ft.tag_id = t.id WHERE ft.file_id = a.id AND t.name LIKE ? COLLATE NOCASE) OR EXISTS (SELECT 1 FROM faces f JOIN persons p ON f.person_id = p.id WHERE f.file_id = a.id AND p.name LIKE ? COLLATE NOCASE))".to_string());
+                            for _ in 0..7 {
+                                sql_params.push(Box::new(pattern.clone()));
+                            }
+                        }
+                    }
+                }
+            } else {
+                Self::append_raw_search_fallback(params, &mut conditions, &mut sql_params);
+            }
+        } else {
+            Self::append_raw_search_fallback(params, &mut conditions, &mut sql_params);
         }
 
         if let Some(condition) = Self::build_file_type_condition(params.search_file_type) {
@@ -4949,6 +5041,26 @@ impl AFile {
         (joins_clause, where_clause, sql_params)
     }
 
+    fn append_raw_search_fallback(
+        params: &QueryParams,
+        conditions: &mut Vec<String>,
+        sql_params: &mut Vec<Box<dyn ToSql>>,
+    ) {
+        let query_text = params
+            .search_query
+            .as_deref()
+            .filter(|s| !s.trim().is_empty())
+            .unwrap_or(params.search_file_name.as_str())
+            .trim();
+        if !query_text.is_empty() {
+            conditions.push("(a.name LIKE ? COLLATE NOCASE OR a.comments LIKE ? COLLATE NOCASE OR a.ocr_text LIKE ? COLLATE NOCASE OR a.ai_objects LIKE ? COLLATE NOCASE OR a.ai_tags LIKE ? COLLATE NOCASE OR EXISTS (SELECT 1 FROM afile_tags ft JOIN atags t ON ft.tag_id = t.id WHERE ft.file_id = a.id AND t.name LIKE ? COLLATE NOCASE) OR EXISTS (SELECT 1 FROM faces f JOIN persons p ON f.person_id = p.id WHERE f.file_id = a.id AND p.name LIKE ? COLLATE NOCASE))".to_string());
+            let pattern = format!("%{}%", query_text);
+            for _ in 0..7 {
+                sql_params.push(Box::new(pattern.clone()));
+            }
+        }
+    }
+
     // get query count and sum
     pub fn get_query_count_and_sum(params: &QueryParams) -> Result<(i64, i64), String> {
         let (joins, where_clause, sql_params) = Self::build_search_query_parts(params);
@@ -4999,6 +5111,22 @@ impl AFile {
         final_params.push(&resolved_limit);
         final_params.push(&offset);
         Self::query_files(&query, &final_params)
+    }
+
+    /// Search files with structured faceted search tokens or raw search query
+    pub fn search_files(
+        search_query: Option<String>,
+        tokens: Option<Vec<SearchToken>>,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> Result<Vec<Self>, String> {
+        let mut params = QueryParams::default();
+        if let Some(ref q) = search_query {
+            params.search_file_name = q.clone();
+            params.search_query = Some(q.clone());
+        }
+        params.search_tokens = tokens;
+        Self::get_query_files(&params, offset.unwrap_or(0), limit.unwrap_or(0))
     }
 
     fn group_key_and_sort_expr(group_by: i64, calendar_sort: i64) -> Option<(String, String)> {
@@ -9973,6 +10101,7 @@ fn create_db_internal() -> Result<(), String> {
             edits TEXT,
             ocr_text TEXT,
             ai_tags TEXT,
+            ai_objects TEXT,
             FOREIGN KEY (folder_id) REFERENCES afolders(id) ON DELETE CASCADE
         )",
         [],
@@ -10066,6 +10195,22 @@ fn create_db_internal() -> Result<(), String> {
     );
     let _ = conn.execute(
         "ALTER TABLE afiles ADD COLUMN ai_tags TEXT",
+        [],
+    );
+    let _ = conn.execute(
+        "ALTER TABLE afiles ADD COLUMN ai_objects TEXT",
+        [],
+    );
+    let _ = conn.execute(
+        "CREATE VIEW IF NOT EXISTS file_persons AS SELECT file_id, person_id FROM faces",
+        [],
+    );
+    let _ = conn.execute(
+        "CREATE VIEW IF NOT EXISTS file_tags AS SELECT file_id, tag_id FROM afile_tags",
+        [],
+    );
+    let _ = conn.execute(
+        "CREATE VIEW IF NOT EXISTS tags AS SELECT id, name, group_id, created_at FROM atags",
         [],
     );
 
@@ -10606,5 +10751,132 @@ mod album_filter_tests {
         conn.execute("UPDATE afolders SET faces_excluded = 1 WHERE id = 1", []).unwrap();
         assert!(AFolder::is_faces_excluded_with_conn(&conn, 1).unwrap());
         assert!(!AFolder::is_faces_excluded_with_conn(&conn, 2).unwrap());
+    }
+}
+
+#[cfg(test)]
+mod faceted_search_tests {
+    use super::*;
+
+    fn create_test_db() -> Connection {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("
+            CREATE TABLE albums (id INTEGER PRIMARY KEY, path TEXT, file_types INTEGER, small_image_filter INTEGER, excluded_folders TEXT);
+            INSERT INTO albums VALUES (1, '/photos', 7, NULL, '[]');
+            CREATE TABLE afolders (id INTEGER PRIMARY KEY, album_id INTEGER, path TEXT, is_excluded_from_search INTEGER);
+            INSERT INTO afolders VALUES (1, 1, '/photos', 0);
+            CREATE TABLE afiles (
+                id INTEGER PRIMARY KEY, folder_id INTEGER, name TEXT, comments TEXT,
+                ocr_text TEXT, ai_objects TEXT, ai_tags TEXT, file_type INTEGER DEFAULT 1,
+                live_photo_video_id INTEGER, width INTEGER, height INTEGER
+            );
+            CREATE TABLE atags (id INTEGER PRIMARY KEY, name TEXT UNIQUE, group_id INTEGER, created_at INTEGER);
+            CREATE TABLE afile_tags (file_id INTEGER, tag_id INTEGER, PRIMARY KEY (file_id, tag_id));
+            CREATE TABLE persons (id INTEGER PRIMARY KEY, name TEXT, cover_face_id INTEGER, created_at INTEGER);
+            CREATE TABLE faces (id INTEGER PRIMARY KEY, file_id INTEGER, bbox TEXT, embedding BLOB, person_id INTEGER, created_at INTEGER);
+            CREATE VIEW file_persons AS SELECT file_id, person_id FROM faces;
+            CREATE VIEW file_tags AS SELECT file_id, tag_id FROM afile_tags;
+            CREATE VIEW tags AS SELECT id, name, group_id, created_at FROM atags;
+
+            INSERT INTO persons (id, name) VALUES (1, 'House'), (2, 'Wilson');
+            INSERT INTO faces (id, file_id, bbox, person_id) VALUES (1, 10, '{}', 1), (2, 20, '{}', 2), (3, 30, '{}', 1);
+
+            INSERT INTO atags (id, name) VALUES (1, 'Receipt'), (2, 'Vacation');
+            INSERT INTO afile_tags (file_id, tag_id) VALUES (10, 1), (20, 2);
+
+            INSERT INTO afiles (id, folder_id, name, comments, ocr_text, ai_objects, ai_tags) VALUES
+                (10, 1, 'photo_10.jpg', 'first test', 'Invoice Total $50 Receipt', 'table chair', 'indoor'),
+                (20, 1, 'photo_20.jpg', 'second test', 'Welcome to Hawaii', 'palm tree ocean car', 'beach outdoor'),
+                (30, 1, 'photo_30.jpg', 'car photo', 'Repair Receipt', 'red car', 'vehicle');
+        ").unwrap();
+        conn
+    }
+
+    #[test]
+    fn test_faceted_search_tokens() {
+        let conn = create_test_db();
+
+        // 1. Search by person token: House (should match files 10 and 30)
+        let mut params = QueryParams::default();
+        params.search_tokens = Some(vec![SearchToken {
+            token_type: "person".to_string(),
+            value: "House".to_string(),
+        }]);
+        let (joins, conditions, values) = AFile::build_search_query_parts(&params);
+        let sql = format!("SELECT a.id FROM afiles a JOIN afolders b ON b.id = a.folder_id {joins} {conditions} ORDER BY a.id");
+        let ids: Vec<i64> = conn.prepare(&sql).unwrap()
+            .query_map(rusqlite::params_from_iter(values.iter()), |r| r.get(0)).unwrap()
+            .collect::<Result<_, _>>().unwrap();
+        assert_eq!(ids, vec![10, 30]);
+
+        // 2. Search by tag token: Receipt (should match file 10)
+        params.search_tokens = Some(vec![SearchToken {
+            token_type: "tag".to_string(),
+            value: "Receipt".to_string(),
+        }]);
+        let (joins, conditions, values) = AFile::build_search_query_parts(&params);
+        let sql = format!("SELECT a.id FROM afiles a JOIN afolders b ON b.id = a.folder_id {joins} {conditions} ORDER BY a.id");
+        let ids: Vec<i64> = conn.prepare(&sql).unwrap()
+            .query_map(rusqlite::params_from_iter(values.iter()), |r| r.get(0)).unwrap()
+            .collect::<Result<_, _>>().unwrap();
+        assert_eq!(ids, vec![10]);
+
+        // 3. Search by text (OCR) token: Receipt (should match files 10 and 30)
+        params.search_tokens = Some(vec![SearchToken {
+            token_type: "text".to_string(),
+            value: "Receipt".to_string(),
+        }]);
+        let (joins, conditions, values) = AFile::build_search_query_parts(&params);
+        let sql = format!("SELECT a.id FROM afiles a JOIN afolders b ON b.id = a.folder_id {joins} {conditions} ORDER BY a.id");
+        let ids: Vec<i64> = conn.prepare(&sql).unwrap()
+            .query_map(rusqlite::params_from_iter(values.iter()), |r| r.get(0)).unwrap()
+            .collect::<Result<_, _>>().unwrap();
+        assert_eq!(ids, vec![10, 30]);
+
+        // 4. Search by object token: car (should match files 20 and 30)
+        params.search_tokens = Some(vec![SearchToken {
+            token_type: "object".to_string(),
+            value: "car".to_string(),
+        }]);
+        let (joins, conditions, values) = AFile::build_search_query_parts(&params);
+        let sql = format!("SELECT a.id FROM afiles a JOIN afolders b ON b.id = a.folder_id {joins} {conditions} ORDER BY a.id");
+        let ids: Vec<i64> = conn.prepare(&sql).unwrap()
+            .query_map(rusqlite::params_from_iter(values.iter()), |r| r.get(0)).unwrap()
+            .collect::<Result<_, _>>().unwrap();
+        assert_eq!(ids, vec![20, 30]);
+
+        // 5. Combined faceted search: Person "House" AND Object "car" (should match file 30)
+        params.search_tokens = Some(vec![
+            SearchToken { token_type: "person".to_string(), value: "House".to_string() },
+            SearchToken { token_type: "object".to_string(), value: "car".to_string() },
+        ]);
+        let (joins, conditions, values) = AFile::build_search_query_parts(&params);
+        let sql = format!("SELECT a.id FROM afiles a JOIN afolders b ON b.id = a.folder_id {joins} {conditions} ORDER BY a.id");
+        let ids: Vec<i64> = conn.prepare(&sql).unwrap()
+            .query_map(rusqlite::params_from_iter(values.iter()), |r| r.get(0)).unwrap()
+            .collect::<Result<_, _>>().unwrap();
+        assert_eq!(ids, vec![30]);
+
+        // 6. Raw token fallback: "Hawaii" (matches in OCR text)
+        params.search_tokens = Some(vec![SearchToken {
+            token_type: "raw".to_string(),
+            value: "Hawaii".to_string(),
+        }]);
+        let (joins, conditions, values) = AFile::build_search_query_parts(&params);
+        let sql = format!("SELECT a.id FROM afiles a JOIN afolders b ON b.id = a.folder_id {joins} {conditions} ORDER BY a.id");
+        let ids: Vec<i64> = conn.prepare(&sql).unwrap()
+            .query_map(rusqlite::params_from_iter(values.iter()), |r| r.get(0)).unwrap()
+            .collect::<Result<_, _>>().unwrap();
+        assert_eq!(ids, vec![20]);
+
+        // 7. Single search_query fallback without tokens
+        params.search_tokens = None;
+        params.search_query = Some("Hawaii".to_string());
+        let (joins, conditions, values) = AFile::build_search_query_parts(&params);
+        let sql = format!("SELECT a.id FROM afiles a JOIN afolders b ON b.id = a.folder_id {joins} {conditions} ORDER BY a.id");
+        let ids: Vec<i64> = conn.prepare(&sql).unwrap()
+            .query_map(rusqlite::params_from_iter(values.iter()), |r| r.get(0)).unwrap()
+            .collect::<Result<_, _>>().unwrap();
+        assert_eq!(ids, vec![20]);
     }
 }

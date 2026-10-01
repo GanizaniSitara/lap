@@ -130,40 +130,43 @@ async fn main() {
 
             // Initialize AI Engine
             let app_handle = _app.handle();
-            let ai_state = _app.state::<t_ai::AiState>();
-            let mut ai_engine = ai_state.0.lock().unwrap();
-            match ai_engine.load_models(app_handle) {
-                Ok(_) => println!("AI Engine started successfully"),
-                Err(e) => {
-                    eprintln!("Failed to start AI Engine: {}", e);
-                    #[cfg(target_os = "windows")]
-                    {
-                        let arch_key = if cfg!(target_arch = "aarch64") {
-                            r"HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\ARM64"
-                        } else {
-                            r"HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\X64"
-                        };
-                        let result = std::process::Command::new("reg")
-                            .args(["query", arch_key, "/v", "Installed"])
-                            .stdout(std::process::Stdio::null())
-                            .status();
-                        let installed = result.is_ok() && result.unwrap().success();
-                        if !installed {
-                            let arch = if cfg!(target_arch = "aarch64") { "arm64" } else { "x64" };
-                            let url = format!("https://aka.ms/vs/17/release/vc_redist.{}.exe", arch);
-                            let _ = std::process::Command::new("powershell")
-                                .args(["-NoProfile", "-Command", &format!(
-                                    r#"$wsh = New-Object -ComObject Wscript.Shell; $wsh.Popup('Lap requires the Microsoft Visual C++ Redistributable.`n`nA download page will open in your browser.`nPlease install it, then restart Lap.', 0, 'Lap - Missing Dependency', 0x30); Start-Process '{}'"#,
-                                    url
-                                )])
+            let app_handle_bg = app_handle.clone();
+            std::thread::spawn(move || {
+                let ai_state = app_handle_bg.state::<t_ai::AiState>();
+                let mut ai_engine = ai_state.0.lock().unwrap();
+                match ai_engine.load_models(&app_handle_bg) {
+                    Ok(_) => println!("AI Engine started successfully"),
+                    Err(e) => {
+                        eprintln!("Failed to start AI Engine: {}", e);
+                        #[cfg(target_os = "windows")]
+                        {
+                            let arch_key = if cfg!(target_arch = "aarch64") {
+                                r"HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\ARM64"
+                            } else {
+                                r"HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\X64"
+                            };
+                            let result = std::process::Command::new("reg")
+                                .args(["query", arch_key, "/v", "Installed"])
                                 .stdout(std::process::Stdio::null())
-                                .stderr(std::process::Stdio::null())
                                 .status();
-                            std::process::exit(1);
+                            let installed = result.is_ok() && result.unwrap().success();
+                            if !installed {
+                                let arch = if cfg!(target_arch = "aarch64") { "arm64" } else { "x64" };
+                                let url = format!("https://aka.ms/vs/17/release/vc_redist.{}.exe", arch);
+                                let _ = std::process::Command::new("powershell")
+                                    .args(["-NoProfile", "-Command", &format!(
+                                        r#"$wsh = New-Object -ComObject Wscript.Shell; $wsh.Popup('LapCasa requires the Microsoft Visual C++ Redistributable.`n`nA download page will open in your browser.`nPlease install it, then restart LapCasa.', 0, 'LapCasa - Missing Dependency', 0x30); Start-Process '{}'"#,
+                                        url
+                                    )])
+                                    .stdout(std::process::Stdio::null())
+                                    .stderr(std::process::Stdio::null())
+                                    .status();
+                                std::process::exit(1);
+                            }
                         }
                     }
                 }
-            }
+            });
 
             if !t_sqlite::is_database_corrupted() {
                 t_utils::start_folder_mtime_sync(_app.handle().clone());
@@ -278,6 +281,7 @@ async fn main() {
             t_cmds::get_query_count_and_sum,
             t_cmds::get_query_time_line,
             t_cmds::get_query_files,
+            t_cmds::search_files,
             t_cmds::get_grouped_query_rows,
             t_cmds::get_group_file_ids,
             t_cmds::get_grouped_file_position,
