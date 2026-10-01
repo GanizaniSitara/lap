@@ -202,7 +202,7 @@
               class="mr-0.5 my-0.5 py-0.5 pr-0.5 rounded bg-base-300/20 border border-base-content/5 shadow-none"
             >
               <AlbumFolder
-                :children="isFolderFiltering ? getFilteredFolderTree(album.id) : album.children"
+                :children="isFolderFiltering ? getFilteredFolderTree(album.id)?.[0]?.children : album.children?.[0]?.children"
                 :albumId="album.id"
                 :rootPath="album.path"
                 :unavailable="album.is_accessible === false"

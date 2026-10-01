@@ -95,15 +95,21 @@ pub fn run_ocr_pipeline(image_path: &str, models_dir_opt: Option<std::path::Path
 
     let mut det_session = ort::session::Session::builder()
         .map_err(|e| e.to_string())?
+        .with_execution_providers([ort::execution_providers::CUDAExecutionProvider::default().build()])
+        .map_err(|e| e.to_string())?
         .commit_from_file(det_path)
         .map_err(|e| e.to_string())?;
         
     let _cls_session = ort::session::Session::builder()
         .map_err(|e| e.to_string())?
+        .with_execution_providers([ort::execution_providers::CUDAExecutionProvider::default().build()])
+        .map_err(|e| e.to_string())?
         .commit_from_file(cls_path)
         .map_err(|e| e.to_string())?;
         
     let mut rec_session = ort::session::Session::builder()
+        .map_err(|e| e.to_string())?
+        .with_execution_providers([ort::execution_providers::CUDAExecutionProvider::default().build()])
         .map_err(|e| e.to_string())?
         .commit_from_file(rec_path)
         .map_err(|e| e.to_string())?;

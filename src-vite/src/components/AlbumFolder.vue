@@ -13,7 +13,7 @@
       :id="'folder-' + child.id" 
       :class="{ 'pl-1': !treeRoot }"
     >
-      <div v-if="child.id != 0 || selection.folderPath.value == rootPath"
+      <div v-if="child.id != 0 && child.path !== rootPath"
         :data-file-drop-path="unavailable ? undefined : child.path"
         :data-file-drop-album-id="unavailable ? undefined : albumId"
         :class="folderClass(child)"

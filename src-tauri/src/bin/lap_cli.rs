@@ -55,9 +55,9 @@ fn get_current_db_path() -> Result<String, String> {
     let config: serde_json::Value = serde_json::from_str(&content)
         .map_err(|e| format!("Failed to parse app-config.json: {}", e))?;
     let current_library_id = config
-        .get("currentLibraryId")
+        .get("current_library_id")
         .and_then(|v| v.as_str())
-        .ok_or_else(|| "currentLibraryId not found".to_string())?;
+        .ok_or_else(|| "current_library_id not found".to_string())?;
 
     let db_dir = if let Some(dir) = config.get("dbStorageDir").and_then(|v| v.as_str()) {
         PathBuf::from(dir)
