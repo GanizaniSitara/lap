@@ -95,3 +95,11 @@ windows = { version = "0.61.3", default-features = false, features = ["Win32_Fou
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
 devtools = ["tauri/devtools"]
+
+[lib]
+name = "lap_casa"
+path = "src/lib.rs"
+
+[[bin]]
+name = "lap-cli"
+path = "src/bin/lap_cli.rs"
