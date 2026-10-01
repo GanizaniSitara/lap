@@ -310,7 +310,7 @@
             </template>
 
             <!-- People -->
-            <template v-if="config.settings.face.enabled && filePersons.length">
+            <template v-if="filePersons.length">
               <div class="flex items-center text-[11px] text-base-content/45 min-h-6 py-1.5">{{ $t('sidebar.people') }}</div>
               <div class="flex items-center min-h-6 gap-x-3 gap-y-1 flex-wrap">
                 <button

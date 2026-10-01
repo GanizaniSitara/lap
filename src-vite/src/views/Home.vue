@@ -367,7 +367,7 @@ const buttons = computed(() =>  [
   { index: SIDEBAR.SEARCH, icon: IconSearch, component: ImageSearch, text: localeMsg.value.sidebar.search },
   { index: SIDEBAR.CALENDAR, icon: IconCalendarDay, component: Calendar, text: localeMsg.value.sidebar.calendar },
   { index: SIDEBAR.TAG, icon: IconTag, component: Tag, text: localeMsg.value.sidebar.tag },
-  { index: SIDEBAR.PERSON, icon: IconPerson, component: Person, text: localeMsg.value.sidebar.people, hidden: !config.settings.face.enabled },
+  { index: SIDEBAR.PERSON, icon: IconPerson, component: Person, text: localeMsg.value.sidebar.people },
   { index: SIDEBAR.LOCATION, icon: IconLocation, component: Location, text: localeMsg.value.sidebar.location },
   { index: SIDEBAR.CAMERA, icon: IconCamera, component: Camera, text: localeMsg.value.sidebar.camera },
 ]);
@@ -387,11 +387,6 @@ const visibleButtons = computed(() =>
     .sort((a, b) => a.index - b.index)
 );
 
-watch(() => config.settings.face.enabled, (enabled) => {
-  if (!enabled && config.main.sidebarIndex === SIDEBAR.PERSON) {
-    config.main.sidebarIndex = SIDEBAR.ALBUM;
-  }
-});
 
 watch(() => config.libraryChangedVersion, async () => {
   appConfig.value = await getAppConfig();

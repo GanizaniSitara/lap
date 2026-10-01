@@ -4050,7 +4050,6 @@ function handleItemAction(payload: { action: string, index: number }) {
     'comment': () => showCommentMsgbox.value = true,
     'search-similar': () => enterSimilarSearchMode(fileList.value[selectedItemIndex.value]),
     'find-person': () => {
-      if (!config.settings.face.enabled) return;
       enterPersonSearchMode(fileList.value[selectedItemIndex.value]);
     },
     'set-album-cover': clickSetAlbumCover,
@@ -7716,9 +7715,6 @@ function enterSimilarSearchMode(file: any) {
 
 // --- Person Search Mode Logic ---
 async function enterPersonSearchMode(file: any) {
-  if (!config.settings.face.enabled) {
-    return;
-  }
   if (!file || !file.id) {
     return;
   }
@@ -7743,7 +7739,7 @@ async function enterPersonSearchMode(file: any) {
 // Open a temporary view of all photos of a specific person. Used by both
 // "find this person" and clicking a person name in the file info panel.
 async function enterPersonTempView(personId: number, personName: string) {
-  if (!config.settings.face.enabled || !personId || personId <= 0) return;
+  if (!personId || personId <= 0) return;
 
   // Increment request ID to cancel any previous thumbnail generation and reset queue
   currentThumbRequestId++;

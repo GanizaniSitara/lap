@@ -289,7 +289,6 @@ export const useFileMenuItems = (
       {
         label: localeMsg.value.menu.file.find_person_images,
         icon: markRaw(IconPersonSearch),
-        hidden: !config.settings.face.enabled,
         disabled: !isImage,
         action: createAction('find-person')
       },
