@@ -92,7 +92,7 @@ async fn main() {
         .manage(t_dedup::DedupState::default())
         .manage(t_similar::SimilarState::default())
         .setup(|_app| {
-            t_advanced_ai::start_worker();
+            t_advanced_ai::start_ai_worker(_app.handle().clone());
             t_video::init_ffmpeg_path(&_app.handle());
             t_config::set_app_identifier(&_app.config().identifier);
             t_menu::install_app_menu(&_app.handle())?;
