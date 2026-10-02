@@ -43,7 +43,9 @@
             <div v-for="item in visibleButtons" :key="item.index">
               <TButton
                 :buttonSize="'normal'"
+                buttonClasses="min-w-[32px] min-h-[32px]"
                 :icon="item.icon"
+                :iconStyle="{ width: '20px', height: '20px' }"
                 text=""
                 :tooltip="(item as any).tooltip || item.text"
                 tooltipPlacement="right"
@@ -59,7 +61,9 @@
               class="mt-auto"
               :class="showDebugBadge ? 'text-warning': ''"
               :buttonSize="'normal'" 
+              buttonClasses="min-w-[32px] min-h-[32px]"
               :icon="IconSettings" 
+              :iconStyle="{ width: '20px', height: '20px' }"
               text=""
               :tooltip="$t('sidebar.settings')"
               tooltipPlacement="right"
