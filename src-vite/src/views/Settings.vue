@@ -137,22 +137,6 @@
                 <option v-for="option in thumbnailBadgeOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
             </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.grid.label_primary') }}</div>
-              </div>
-              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelPrimary" :disabled="config.settings.grid.style !== 0">
-                  <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
-              </select>
-            </div>
-            <div class="flex items-center justify-between px-1 rounded-box hover:bg-base-100/10 transition-colors duration-200">
-              <div class="flex flex-col gap-0.5 text-sm leading-5">
-                <div>{{ $t('settings.grid.label_secondary') }}</div>
-              </div>
-              <select class="select select-bordered select-sm min-w-32" v-model="config.settings.grid.labelSecondary" :disabled="config.settings.grid.style !== 0">
-                  <option v-for="(option, index) in gridLabelOptions" :key="index" :value="option.value">{{ option.label }}</option>
-              </select>
-            </div>
           </div>
 
           <!-- filmstrip -->
@@ -969,18 +953,6 @@ const mapMarkerSizeOptions = computed(() => {
   return MAP_MARKER_SIZES.map((size, index) => ({ label: labels[index], value: size }));
 });
 
-// Define the grid label options
-const gridLabelOptions = computed(() => {
-  const options = localeMsg.value.settings.grid.label_options;
-  const result = [];
-
-  for (let i = 0; i < options.length; i++) {
-    result.push({ label: options[i], value: i });
-  }
-
-  return result;
-});
-
 const thumbnailBadgeOptions = computed(() => {
   const options = localeMsg.value.settings.grid.thumbnail_badge_options;
   const values = [
@@ -1508,12 +1480,6 @@ watch(() => config.settings.grid.scaling, (newValue) => {
 });
 watch(() => config.settings.grid.thumbnailCorners, (newValue) => {
   emit('settings-gridThumbnailCorners-changed', newValue);
-});
-watch(() => config.settings.grid.labelPrimary, (newValue) => {
-  emit('settings-gridLabelPrimary-changed', newValue);
-});
-watch(() => config.settings.grid.labelSecondary, (newValue) => {
-  emit('settings-gridLabelSecondary-changed', newValue);
 });
 watch(() => config.settings.grid.thumbnailBadge, (newValue) => {
   emit('settings-gridThumbnailBadge-changed', newValue);

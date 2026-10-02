@@ -149,12 +149,6 @@ if (isMainWindow) {
   listen('settings-gridThumbnailCorners-changed', (event) => {
     config.setGridThumbnailCorners(event.payload)
   })
-  listen('settings-gridLabelPrimary-changed', (event) => {
-    config.setGridLabelPrimary(event.payload)
-  })
-  listen('settings-gridLabelSecondary-changed', (event) => {
-    config.setGridLabelSecondary(event.payload)
-  })
   listen('settings-gridThumbnailBadge-changed', (event) => {
     config.setGridThumbnailBadge(event.payload)
   })

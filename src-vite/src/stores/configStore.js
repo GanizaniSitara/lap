@@ -132,8 +132,6 @@ export const useConfigStore = defineStore('configStore', {
         viewMode: 'grid',        // grid | filmstrip | map
         scaling: 1,              // 0: Fit Entire Image, 1: Crop to Fill, 2: Stretch to Fill
         thumbnailCorners: 0,     // 0: Follow theme, 1: Square
-        labelPrimary: 1,         // card view: primary label (1: Name)
-        labelSecondary: 3,       // card view: secondary label (3: Dimension)
         thumbnailBadge: 0,       // thumbnail badge (0: empty, 1: file format, 2: ISO, 3: shutter, 4: aperture, 5: focal length, 6: exposure)
         previewPosition: 1,      // filmstrip view: preview position (0: top, 1: bottom, 2: left, 3: right)
       },
@@ -300,12 +298,6 @@ export const useConfigStore = defineStore('configStore', {
     },
     setGridThumbnailCorners(thumbnailCorners) {
       this.settings.grid.thumbnailCorners = thumbnailCorners;
-    },
-    setGridLabelPrimary(gridLabelPrimary) {
-      this.settings.grid.labelPrimary = gridLabelPrimary;
-    },
-    setGridLabelSecondary(gridLabelSecondary) {
-      this.settings.grid.labelSecondary = gridLabelSecondary;
     },
     setGridThumbnailBadge(thumbnailBadge) {
       this.settings.grid.thumbnailBadge = thumbnailBadge;

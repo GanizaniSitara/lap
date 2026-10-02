@@ -472,14 +472,10 @@ const itemHeight = computed(() => {
   const size = props.gridSize;
   
   if (style === 0) {
-    let labelHeight = 0;
-    if (config.settings.grid.labelPrimary > 0) labelHeight += 18;   // text-sm
-    if (config.settings.grid.labelSecondary > 0) labelHeight += 16; // text-xs
-    
     if (isVerticalFilmstrip.value && containerWidth.value > 0) {
-      return containerWidth.value + 12 + labelHeight; // Narrower padding in filmstrip
+      return containerWidth.value + 12; // Narrower padding in filmstrip
     }
-    return size + 20 + labelHeight; // size + padding/border/gap(20) + labels
+    return size + 20; // size + padding/border/gap(20)
   }
   if (style === 1) return itemWidth.value + gap * 0.5;
   

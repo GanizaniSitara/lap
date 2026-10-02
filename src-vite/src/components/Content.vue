@@ -2449,10 +2449,7 @@ const itemWidth = computed(() => {
 
 const itemSize = computed(() => {
   if (config.settings.grid.style === 0) {
-    let labelHeight = 0
-    if (config.settings.grid.labelPrimary > 0 ) labelHeight += 16;      // height of text-sm
-    if (config.settings.grid.labelSecondary > 0 ) labelHeight += 16;    // height of text-xs
-    return gridSize.value + 20 + labelHeight; // size + padding/border/gap(20) + labels
+    return gridSize.value + 20; // size + padding/border/gap(20)
   } else if (config.settings.grid.style === 1) {
     return itemWidth.value + gap / 2;
   } else if (isGeometryGridStyle.value) {

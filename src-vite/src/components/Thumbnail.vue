@@ -203,30 +203,6 @@
       </div>
     </div>
 
-    <!-- label -->
-    <div 
-      v-if="config.settings.grid.style === 0" 
-      class="flex flex-col items-center" 
-      :class="{ 
-        'text-primary': isSelected && isContentActive,
-        'text-primary/50': isSelected && !isContentActive,
-      }"
-      :style="{ width: layoutStyle.width }"
-    >
-      <span 
-        class="w-full text-sm text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden"
-        :title="getGridLabelTooltip(file, config.settings.grid.labelPrimary)"
-      >
-        {{ getGridLabelText(file, config.settings.grid.labelPrimary) }}
-      </span>
-      <span 
-        class="w-full text-xs text-center whitespace-pre text-nowrap text-ellipsis overflow-hidden"
-        :title="getGridLabelTooltip(file, config.settings.grid.labelSecondary)"
-      >
-        {{ getGridLabelText(file, config.settings.grid.labelSecondary) }}
-      </span>
-    </div>
-
   </div>
 </template>
 
@@ -236,7 +212,7 @@ import { useI18n } from 'vue-i18n';
 import { useUIStore } from '@/stores/uiStore';
 import { config } from '@/common/config';
 import { THUMBNAIL_BADGE } from '@/common/constants';
-import { isMac, shortenFilename, formatFileSize, formatDimensionText, formatDuration, formatTimestamp, formatCaptureSettings, formatCaptureSettingValue, formatCameraInfo, getAssetSrc, getThumbUrl, getLapUrl, getFileExtension } from '@/common/utils';
+import { isMac, formatDuration, formatCaptureSettingValue, getAssetSrc, getThumbUrl, getLapUrl, getFileExtension } from '@/common/utils';
 import { isWebViewVideoPlaybackDisabled, getGStreamerAvailability } from '@/common/video';
 import { claimHoverPreview, releaseHoverPreview } from '@/common/hoverPreview';
 import ContextMenu from '@/components/ContextMenu.vue';
@@ -611,27 +587,6 @@ const menuItems = useFileMenuItems(
   t,
   (action) => emit('action', action),
 );
-
-const getGridLabelText = (file: any, option: number) => {
-  switch (option) {
-    case 0: return '';
-    case 1: return shortenFilename(file.name) || ' ';
-    case 2: return formatFileSize(file.size) || ' ';
-    case 3: return formatDimensionText(file.width, file.height) || ' ';
-    case 4: return formatTimestamp(file.taken_date, localeMsg.value.format.date_time) || ' ';
-    case 5: return file.geo_name || ' ';
-    case 6: return formatCameraInfo(file.e_make, file.e_model) || ' ';
-    case 7: return file.e_lens_model || ' ';
-    case 8: return formatCaptureSettings(file.e_focal_length, file.e_exposure_time, file.e_f_number, file.e_iso_speed, file.e_exposure_bias) || ' ';
-    default: return '';
-  }
-};
-
-const getGridLabelTooltip = (file: any, option: number) => {
-  if (option === 1) return file.name;
-  const text = getGridLabelText(file, option);
-  return text === ' ' ? '' : text;
-};
 
 type ThumbnailBadge = {
   key: string;
